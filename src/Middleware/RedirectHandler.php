@@ -1,0 +1,81 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Hd3r\Router\Middleware;
+
+use Hd3r\Router\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+/**
+ * Handler for redirect routes.
+ *
+ * Cache-friendly alternative to Closures.
+ */
+class RedirectHandler implements RequestHandlerInterface
+{
+    /**
+     * Create a new RedirectHandler instance.
+     *
+     * @param string $target Target URL (can contain {param} placeholders)
+     * @param int $status HTTP status code (default: 302)
+     */
+    public function __construct(
+        private readonly string $target,
+        private readonly int $status = 302
+    ) {}
+
+    /**
+     * Handle the request by returning a redirect response.
+     *
+     * @param ServerRequestInterface $request PSR-7 request
+     * @return ResponseInterface Redirect response
+     */
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        // Replace route parameters in target URL
+        $target = $this->target;
+        foreach ($request->getAttributes() as $key => $value) {
+            if (is_scalar($value)) {
+                $target = str_replace('{' . $key . '}', (string) $value, $target);
+            }
+        }
+
+        return Response::redirect($target, $this->status);
+    }
+
+    /**
+     * Get target URL (for serialization).
+     *
+     * @return string
+     */
+    public function getTarget(): string
+    {
+        return $this->target;
+    }
+
+    /**
+     * Get status code (for serialization).
+     *
+     * @return int
+     */
+    public function getStatus(): int
+    {
+        return $this->status;
+    }
+
+    /**
+     * Restore object from var_export() output.
+     *
+     * Required for OPcache-friendly route caching.
+     *
+     * @param array{target: string, status: int} $data Exported data
+     * @return self
+     */
+    public static function __set_state(array $data): self
+    {
+        return new self($data['target'], $data['status']);
+    }
+}
