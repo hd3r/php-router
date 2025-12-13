@@ -53,6 +53,7 @@ class RouteHandler implements RequestHandlerInterface
             [$class, $method] = $this->handler;
 
             // Resolve from container or instantiate directly
+            /** @var class-string $class */
             $instance = ($this->container?->has($class))
                 ? $this->container->get($class)
                 : new $class();

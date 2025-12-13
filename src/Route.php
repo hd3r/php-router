@@ -57,7 +57,7 @@ class Route
      *
      * Required for OPcache-friendly route caching.
      *
-     * @param array{methods: string[], pattern: string, handler: mixed, middleware?: array, name?: string|null} $data Exported data
+     * @param array{methods: string[], pattern: string, handler: mixed, middleware?: array<int, string|object>, name?: string|null} $data Exported data
      */
     public static function __set_state(array $data): self
     {

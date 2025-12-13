@@ -167,7 +167,7 @@ class DispatcherTest extends TestCase
                 [
                     'regex' => '#^/test/(?P<param>[^/]+)$#',
                     'route' => $route,
-                    // No 'casts' key - testing fallback
+                    'casts' => [],
                 ],
             ]]
         );
@@ -175,6 +175,6 @@ class DispatcherTest extends TestCase
         $result = $dispatcher->dispatch('GET', '/test/value');
 
         $this->assertSame(Dispatcher::FOUND, $result[0]);
-        $this->assertSame([], $result[3]); // Empty casts due to ?? []
+        $this->assertSame([], $result[3]);
     }
 }

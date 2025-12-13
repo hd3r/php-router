@@ -162,6 +162,7 @@ final class UrlGenerator
             $pattern
         );
 
-        return $url;
+        // preg_replace_callback returns null only on error, which won't happen with valid pattern
+        return $url ?? $pattern;
     }
 }

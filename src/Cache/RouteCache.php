@@ -35,7 +35,7 @@ class RouteCache
     /**
      * Save dispatch data to cache.
      *
-     * @param array $data The dispatch data to cache
+     * @param array<int|string, mixed> $data The dispatch data to cache
      *
      * @throws \LogicException If data contains Closures
      * @throws CacheException If writing fails
@@ -90,7 +90,7 @@ class RouteCache
      *
      * @throws CacheException If signature validation fails
      *
-     * @return array|null The cached dispatch data, or null if not available
+     * @return array<int|string, mixed>|null The cached dispatch data, or null if not available
      */
     public function load(): ?array
     {
@@ -181,7 +181,8 @@ class RouteCache
         if (!file_exists($this->cacheFile)) {
             return null;
         }
-        return filemtime($this->cacheFile);
+        $mtime = filemtime($this->cacheFile);
+        return $mtime !== false ? $mtime : null;
     }
 
     /**
@@ -193,6 +194,8 @@ class RouteCache
      */
     private function generateSignature(string $data): string
     {
+        // signatureKey is guaranteed non-null when this method is called
+        assert($this->signatureKey !== null);
         return hash_hmac('sha256', $data, $this->signatureKey);
     }
 

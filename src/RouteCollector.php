@@ -352,7 +352,7 @@ class RouteCollector
     /**
      * Compile routes for the Dispatcher.
      *
-     * @return array{0: array<string, array<string, Route>>, 1: array<string, array>} [staticRoutes, dynamicRoutes]
+     * @return array{0: array<string, array<string, Route>>, 1: array<string, array<int, array{regex: string, route: Route, casts: array<string, string>}>>} [staticRoutes, dynamicRoutes]
      */
     public function getData(): array
     {

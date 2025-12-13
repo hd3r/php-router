@@ -49,11 +49,11 @@ class Router implements RequestHandlerInterface
             'debug' => $config['debug']
                 ?? filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOL)
                 ?: in_array($_ENV['APP_ENV'] ?? '', ['local', 'dev', 'development'], true),
-            'basePath' => $config['basePath'] ?? $_ENV['ROUTER_BASE_PATH'] ?? '',
-            'baseUrl' => $config['baseUrl'] ?? $_ENV['APP_URL'] ?? null,
-            'trailingSlash' => $config['trailingSlash'] ?? $_ENV['ROUTER_TRAILING_SLASH'] ?? 'strict',
-            'cacheFile' => $config['cacheFile'] ?? $_ENV['ROUTER_CACHE_FILE'] ?? null,
-            'cacheSignature' => $config['cacheSignature'] ?? $_ENV['ROUTER_CACHE_KEY'] ?? null,
+            'basePath' => (string) ($config['basePath'] ?? $_ENV['ROUTER_BASE_PATH'] ?? ''),
+            'baseUrl' => isset($config['baseUrl']) ? (string) $config['baseUrl'] : (isset($_ENV['APP_URL']) ? (string) $_ENV['APP_URL'] : null),
+            'trailingSlash' => (string) ($config['trailingSlash'] ?? $_ENV['ROUTER_TRAILING_SLASH'] ?? 'strict'),
+            'cacheFile' => isset($config['cacheFile']) ? (string) $config['cacheFile'] : (isset($_ENV['ROUTER_CACHE_FILE']) ? (string) $_ENV['ROUTER_CACHE_FILE'] : null),
+            'cacheSignature' => isset($config['cacheSignature']) ? (string) $config['cacheSignature'] : (isset($_ENV['ROUTER_CACHE_KEY']) ? (string) $_ENV['ROUTER_CACHE_KEY'] : null),
             'routesFile' => $config['routesFile'] ?? null,
         ];
     }
@@ -147,7 +147,7 @@ class Router implements RequestHandlerInterface
      * Generate relative URL for a named route.
      *
      * @param string $name Route name
-     * @param array<string, mixed> $params Route parameters
+     * @param array<string, int|string> $params Route parameters
      *
      * @throws Exception\RouteNotFoundException If route name does not exist
      *
@@ -164,7 +164,7 @@ class Router implements RequestHandlerInterface
      * Requires baseUrl to be set via config or APP_URL env variable.
      *
      * @param string $name Route name
-     * @param array<string, mixed> $params Route parameters
+     * @param array<string, int|string> $params Route parameters
      *
      * @throws Exception\RouteNotFoundException If route name does not exist
      * @throws Exception\RouterException If baseUrl is not configured
@@ -285,7 +285,9 @@ class Router implements RequestHandlerInterface
             $data = $dispatchData;
         } else {
             // Extract from cached structure
-            $this->cachedNamedRoutes = $data['namedRoutes'] ?? [];
+            /** @var array<string, string> $namedRoutes */
+            $namedRoutes = $data['namedRoutes'] ?? [];
+            $this->cachedNamedRoutes = $namedRoutes;
             $data = $data['dispatchData'] ?? $data;
         }
 

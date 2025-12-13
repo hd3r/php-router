@@ -24,7 +24,7 @@ class Dispatcher
      * Create a new Dispatcher instance.
      *
      * @param array<string, array<string, Route>> $staticRoutes Static routes by method and pattern
-     * @param array<string, array> $dynamicRoutes Dynamic routes by method
+     * @param array<string, array<int, array{regex: string, route: Route, casts: array<string, string>}>> $dynamicRoutes Dynamic routes by method
      */
     public function __construct(
         private readonly array $staticRoutes,
@@ -38,7 +38,7 @@ class Dispatcher
      * @param string $method HTTP method
      * @param string $uri Request URI
      *
-     * @return array{0: int, 1: mixed, 2: array, 3: array} [Status, Route|AllowedMethods, Params, Casts]
+     * @return array{0: int, 1: mixed, 2: array<string, string>, 3: array<string, string>} [Status, Route|AllowedMethods, Params, Casts]
      */
     public function dispatch(string $method, string $uri): array
     {
@@ -85,7 +85,7 @@ class Dispatcher
                     self::FOUND,
                     $data['route'],
                     $params,
-                    $data['casts'] ?? [],
+                    $data['casts'],
                 ];
             }
         }

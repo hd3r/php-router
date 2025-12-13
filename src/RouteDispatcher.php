@@ -31,7 +31,7 @@ class RouteDispatcher implements RequestHandlerInterface
     /**
      * Create a new RouteDispatcher.
      *
-     * @param array{0: array, 1: array} $dispatchData Compiled route data from RouteCollector
+     * @param array{0: array<string, array<string, Route>>, 1: array<string, array<int, array{regex: string, route: Route, casts: array<string, string>}>>} $dispatchData Compiled route data from RouteCollector
      * @param ContainerInterface|null $container PSR-11 container for dependency injection
      * @param string $basePath Base path prefix
      * @param string $trailingSlash Trailing slash mode ('strict' or 'ignore')
@@ -44,7 +44,7 @@ class RouteDispatcher implements RequestHandlerInterface
         string $trailingSlash = 'strict',
         bool $debug = false
     ) {
-        $this->dispatcher = new Dispatcher($dispatchData[0] ?? [], $dispatchData[1] ?? []);
+        $this->dispatcher = new Dispatcher($dispatchData[0], $dispatchData[1]);
         $this->basePath = $basePath;
         $this->trailingSlash = $trailingSlash;
         $this->debug = $debug;
@@ -82,8 +82,8 @@ class RouteDispatcher implements RequestHandlerInterface
         try {
             return match ($match[0]) {
                 Dispatcher::NOT_FOUND => $this->handleNotFound($method, $uri),
-                Dispatcher::METHOD_NOT_ALLOWED => $this->handleMethodNotAllowed($method, $uri, $match[1]),
-                Dispatcher::FOUND => $this->handleFound($match[1], $match[2], $match[3] ?? [], $request, $method, $uri, $startTime),
+                Dispatcher::METHOD_NOT_ALLOWED => $this->handleMethodNotAllowed($method, $uri, $this->ensureStringArray($match[1])),
+                Dispatcher::FOUND => $this->handleFound($this->ensureRoute($match[1]), $match[2], $match[3], $request, $method, $uri, $startTime),
                 default => Response::serverError('Unknown dispatcher result'),
             };
         } catch (\TypeError $e) {
@@ -122,23 +122,27 @@ class RouteDispatcher implements RequestHandlerInterface
         float $startTime
     ): ResponseInterface {
         // 1. Validated Type Casting (spec-compliant)
+        /** @var array<string, string|int|float|bool> $castedParams */
+        $castedParams = $params;
         foreach ($casts as $key => $type) {
-            if (!isset($params[$key])) {
+            if (!isset($castedParams[$key])) {
                 continue;
             }
 
-            $params[$key] = match ($type) {
-                'int' => $this->castInt($params[$key], $key),
-                'float' => $this->castFloat($params[$key], $key),
-                'bool' => $this->castBool($params[$key], $key),
-                default => $params[$key],
+            /** @var string $value */
+            $value = $castedParams[$key];
+            $castedParams[$key] = match ($type) {
+                'int' => $this->castInt($value, $key),
+                'float' => $this->castFloat($value, $key),
+                'bool' => $this->castBool($value, $key),
+                default => $value,
             };
         }
 
         // 2. Inject parameters into Request (BEFORE Middleware!)
         // Store route params separately for handler invocation
-        $request = $request->withAttribute('_route_params', $params);
-        foreach ($params as $key => $value) {
+        $request = $request->withAttribute('_route_params', $castedParams);
+        foreach ($castedParams as $key => $value) {
             $request = $request->withAttribute($key, $value);
         }
 
@@ -156,7 +160,7 @@ class RouteDispatcher implements RequestHandlerInterface
             'path' => $uri,
             'route' => $route->pattern,
             'handler' => $route->handler,
-            'params' => $params,
+            'params' => $castedParams,
             'duration' => microtime(true) - $startTime,
         ]);
 
@@ -199,13 +203,13 @@ class RouteDispatcher implements RequestHandlerInterface
     /**
      * Resolve middleware from class name or instance.
      *
-     * @param mixed $middleware Middleware class name or instance
+     * @param string|object $middleware Middleware class name or instance
      *
      * @throws RouterException If middleware cannot be resolved
      *
      * @return MiddlewareInterface Resolved middleware
      */
-    private function resolveMiddleware(mixed $middleware): MiddlewareInterface
+    private function resolveMiddleware(string|object $middleware): MiddlewareInterface
     {
         if ($middleware instanceof MiddlewareInterface) {
             return $middleware;
@@ -213,15 +217,21 @@ class RouteDispatcher implements RequestHandlerInterface
 
         if (is_string($middleware)) {
             if ($this->container?->has($middleware)) {
-                return $this->container->get($middleware);
+                $resolved = $this->container->get($middleware);
+                if ($resolved instanceof MiddlewareInterface) {
+                    return $resolved;
+                }
             }
             if (class_exists($middleware)) {
-                return new $middleware();
+                $instance = new $middleware();
+                if ($instance instanceof MiddlewareInterface) {
+                    return $instance;
+                }
             }
         }
 
         throw new RouterException(
-            sprintf("Cannot resolve middleware '%s'", is_string($middleware) ? $middleware : gettype($middleware))
+            sprintf("Cannot resolve middleware '%s'", is_string($middleware) ? $middleware : $middleware::class)
         );
     }
 
@@ -307,5 +317,34 @@ class RouteDispatcher implements RequestHandlerInterface
                 sprintf("Parameter '%s': expected boolean (true/false/1/0), got '%s'", $key, $value)
             ),
         };
+    }
+
+    // ==================== Type Assertion Helpers ====================
+
+    /**
+     * Ensure the value is a Route instance.
+     *
+     * @param mixed $value Value to check
+     *
+     * @return Route Validated Route instance
+     */
+    private function ensureRoute(mixed $value): Route
+    {
+        assert($value instanceof Route);
+        return $value;
+    }
+
+    /**
+     * Ensure the value is a string array (for allowed methods).
+     *
+     * @param mixed $value Value to check
+     *
+     * @return string[] Validated string array
+     */
+    private function ensureStringArray(mixed $value): array
+    {
+        assert(is_array($value));
+        /** @var string[] $value */
+        return $value;
     }
 }
