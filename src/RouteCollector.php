@@ -369,9 +369,15 @@ class RouteCollector
 
                 // DYNAMIC COMPILATION: Routes with parameters
                 $casts = [];
-                $regex = preg_replace_callback(
-                    '/\{(\w+)(?::(\w+))?\}/',
-                    function ($matches) use (&$casts) {
+
+                // Split pattern into placeholder and literal parts
+                // This ensures literal segments are properly escaped (e.g., dots in /v1.0/)
+                $parts = preg_split('/(\{[^}]+\})/', $route->pattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+                $regexParts = [];
+
+                foreach ($parts ?: [] as $part) {
+                    if (preg_match('/^\{(\w+)(?::(\w+))?\}$/', $part, $matches)) {
+                        // Placeholder - convert to regex capture group
                         $name = $matches[1];
                         $type = $matches[2] ?? null;
                         $segmentPattern = '[^/]+'; // Default
@@ -385,10 +391,14 @@ class RouteCollector
                             }
                         }
 
-                        return "(?P<{$name}>{$segmentPattern})";
-                    },
-                    $route->pattern
-                );
+                        $regexParts[] = "(?P<{$name}>{$segmentPattern})";
+                    } else {
+                        // Literal segment - escape regex special chars
+                        $regexParts[] = preg_quote($part, '#');
+                    }
+                }
+
+                $regex = implode('', $regexParts);
 
                 $dynamicRoutes[$method][] = [
                     'regex' => '#^' . $regex . '$#',

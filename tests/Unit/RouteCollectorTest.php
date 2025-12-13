@@ -291,4 +291,24 @@ class RouteCollectorTest extends TestCase
         $routes = $this->collector->getRoutes();
         $this->assertSame('/', $routes[0]->pattern);
     }
+
+    public function testRegexSpecialCharsInPatternAreEscaped(): void
+    {
+        // Bug: /v1.0/users/{id} matched /v1X0/users/123 because dot was not escaped
+        $this->collector->get('/v1.0/users/{id}', 'handler');
+
+        [$static, $dynamic] = $this->collector->getData();
+
+        $regex = $dynamic['GET'][0]['regex'];
+
+        // Dot should be escaped as \.
+        $this->assertStringContainsString('v1\.0', $regex);
+
+        // Should match correct URL
+        $this->assertMatchesRegularExpression($regex, '/v1.0/users/123');
+
+        // Should NOT match URL with different char instead of dot
+        $this->assertDoesNotMatchRegularExpression($regex, '/v1X0/users/123');
+        $this->assertDoesNotMatchRegularExpression($regex, '/v1-0/users/123');
+    }
 }
