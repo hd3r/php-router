@@ -485,4 +485,50 @@ class RouterTest extends TestCase
 
         unlink($cacheFile);
     }
+
+    public function testClosuresWithCacheTriggersErrorHookButContinues(): void
+    {
+        $cacheFile = sys_get_temp_dir() . '/router_cache_closure_' . uniqid() . '.php';
+
+        // Routes with Closures cannot be cached
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
+
+                return function (RouteCollector $r) {
+                    $r->get('/closure', fn($req) => Response::success(['works' => true]));
+                };
+                PHP
+        );
+
+        $cacheErrorTriggered = false;
+        $cacheErrorData = null;
+
+        $router = Router::create(['debug' => false])
+            ->enableCache($cacheFile, 'signature-key')
+            ->loadRoutes($this->routesFile)
+            ->on('error', function ($data) use (&$cacheErrorTriggered, &$cacheErrorData) {
+                if (isset($data['type']) && $data['type'] === 'cache' && !$cacheErrorTriggered) {
+                    $cacheErrorTriggered = true;
+                    $cacheErrorData = $data;
+                }
+            });
+
+        // Should not throw even though Closures can't be cached
+        $response = $router->handle(new ServerRequest('GET', '/closure'));
+
+        // Error hook should have been triggered
+        $this->assertTrue($cacheErrorTriggered);
+        $this->assertSame('cache', $cacheErrorData['type']);
+        $this->assertInstanceOf(\LogicException::class, $cacheErrorData['exception']);
+        $this->assertStringContainsString('Closure', $cacheErrorData['message']);
+
+        // Route should still work (Closures work, just not cached)
+        $this->assertSame(200, $response->getStatusCode());
+
+        // Cache file should NOT exist (save failed gracefully)
+        $this->assertFileDoesNotExist($cacheFile);
+    }
 }

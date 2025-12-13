@@ -313,11 +313,20 @@ class Router implements RequestHandlerInterface
             $dispatchData = $this->collector->getData();
             $namedRoutes = $this->collector->getNamedRoutesData();
 
-            // Save to cache with named routes (throws LogicException if Closures are used!)
-            $cache?->save([
-                'dispatchData' => $dispatchData,
-                'namedRoutes' => $namedRoutes,
-            ]);
+            // Save to cache (fails gracefully if Closures are used)
+            try {
+                $cache?->save([
+                    'dispatchData' => $dispatchData,
+                    'namedRoutes' => $namedRoutes,
+                ]);
+            } catch (\LogicException $e) {
+                // Closures cannot be cached - trigger error hook and continue without cache
+                $this->trigger('error', [
+                    'type' => 'cache',
+                    'message' => $e->getMessage(),
+                    'exception' => $e,
+                ]);
+            }
 
             $data = $dispatchData;
         } else {
