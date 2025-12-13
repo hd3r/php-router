@@ -157,8 +157,15 @@ final class UrlGenerator
      */
     private function replaceParameters(string $pattern, array $params): string
     {
-        // Remove optional segment markers
-        $pattern = str_replace(['[', ']'], '', $pattern);
+        // Optional segments [/suffix] are not supported - fail fast instead of silent misbehavior
+        if (str_contains($pattern, '[') || str_contains($pattern, ']')) {
+            throw new RouterException(
+                sprintf(
+                    'Optional segments [] are not supported in pattern "%s". Define separate routes instead.',
+                    $pattern
+                )
+            );
+        }
 
         // Replace parameters: {name} or {name:constraint}
         $url = preg_replace_callback(

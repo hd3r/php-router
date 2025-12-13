@@ -146,16 +146,18 @@ class UrlGeneratorTest extends TestCase
         $this->assertFalse($generator->hasRoute(''));
     }
 
-    public function testHandlesOptionalSegments(): void
+    public function testThrowsOnOptionalSegments(): void
     {
         $routes = [
             new Route(['GET'], '/users[/{id}]', 'handler', [], 'users.optional'),
         ];
         $generator = new UrlGenerator($routes);
 
-        // Without param - brackets are stripped
-        $url = $generator->url('users.optional', ['id' => 5]);
-        $this->assertSame('/users/5', $url);
+        // Optional segments are not supported - should throw instead of silent misbehavior
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('Optional segments [] are not supported');
+
+        $generator->url('users.optional', ['id' => 5]);
     }
 
     public function testSetBaseUrlTrimsTrailingSlash(): void
