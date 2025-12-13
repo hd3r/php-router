@@ -1,11 +1,10 @@
-# Auto detect text files and perform LF normalization
-* text=auto
-
-# Export ignore for lean releases
+# Exclude from export (composer install / GitHub archive)
 /tests export-ignore
 /.github export-ignore
-/phpunit.xml.dist export-ignore
 /.gitignore export-ignore
 /.gitattributes export-ignore
-*.md export-ignore
-!README.md
+/.php-cs-fixer.dist.php export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml.dist export-ignore
+/CHANGELOG.md export-ignore
+/CONTRIBUTING.md export-ignore
