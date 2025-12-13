@@ -125,6 +125,30 @@ class RouteHandlerTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
     }
+
+    public function testThrowsWhenControllerRequiresConstructorParams(): void
+    {
+        // Controller with required constructor parameter and no container
+        $handler = new RouteHandler([ControllerWithRequiredParams::class, 'index']);
+
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('requires constructor parameters');
+        $this->expectExceptionMessage('ControllerWithRequiredParams');
+
+        $handler->handle(new ServerRequest('GET', '/test'));
+    }
+
+    public function testControllerWithOptionalParamsWorksWithoutContainer(): void
+    {
+        // Controller with only optional constructor parameters should work
+        $handler = new RouteHandler([ControllerWithOptionalParams::class, 'index']);
+
+        $response = $handler->handle(new ServerRequest('GET', '/test'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $body = json_decode((string) $response->getBody(), true);
+        $this->assertSame('default', $body['data']['value']);
+    }
 }
 
 class TestController
@@ -137,5 +161,29 @@ class TestController
     public function show(ServerRequestInterface $request, int $id): ResponseInterface
     {
         return Response::success(['action' => 'show', 'id' => $id]);
+    }
+}
+
+class ControllerWithRequiredParams
+{
+    public function __construct(private readonly string $requiredDependency)
+    {
+    }
+
+    public function index(ServerRequestInterface $request): ResponseInterface
+    {
+        return Response::success(['dependency' => $this->requiredDependency]);
+    }
+}
+
+class ControllerWithOptionalParams
+{
+    public function __construct(private readonly string $value = 'default')
+    {
+    }
+
+    public function index(ServerRequestInterface $request): ResponseInterface
+    {
+        return Response::success(['value' => $this->value]);
     }
 }

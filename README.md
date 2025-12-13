@@ -457,6 +457,202 @@ location / {
 }
 ```
 
+## Custom Response Formats
+
+The router uses `JsonResponder` by default. You can swap it for RFC 7807 or custom formats:
+
+```php
+use Hd3r\Router\Response;
+use Hd3r\Router\Service\RfcResponder;
+
+// RFC 7807 Problem Details format
+Response::setResponder(new RfcResponder('https://api.example.com/errors'));
+
+// Error responses now use RFC 7807:
+// {
+//   "type": "https://api.example.com/errors/not-found",
+//   "title": "User not found",
+//   "status": 404,
+//   "detail": "User with ID 123 not found"
+// }
+```
+
+**Create your own responder:**
+```php
+use Hd3r\Router\Contract\ResponderInterface;
+
+class XmlResponder implements ResponderInterface
+{
+    public function formatSuccess(mixed $data, ?string $message = null, ?array $meta = null): array
+    {
+        // Return array that will be converted to XML
+    }
+
+    public function formatError(string $message, ?string $code = null, ?array $details = null): array
+    {
+        // Return array for error responses
+    }
+
+    public function getContentType(): string
+    {
+        return 'application/xml';
+    }
+}
+```
+
+**Reset in tests:**
+```php
+protected function tearDown(): void
+{
+    Response::reset(); // Restores default JsonResponder
+}
+```
+
+## Limitations
+
+**What this router does NOT support:**
+
+| Feature | Reason |
+|---------|--------|
+| Optional segments `[/suffix]` | Complexity vs. benefit. Define two routes instead. |
+| Regex in route patterns | Use predefined patterns or `addPattern()`. |
+| Route priority/ordering | Routes match in definition order. Define specific routes first. |
+| Async/Swoole out-of-box | Use `handle()` method, not `run()`. Emit response yourself. |
+| >500 dynamic routes efficiently | O(n) matching. Consider splitting into microservices. |
+
+**Workarounds:**
+
+```php
+// Instead of optional segments:
+$r->get('/users', $handler);
+$r->get('/users/{id}', $handler);
+
+// Instead of inline regex:
+$r->addPattern('date', '\d{4}-\d{2}-\d{2}');
+$r->get('/events/{date:date}', $handler);
+```
+
+## Performance
+
+### Route Caching
+
+**Always enable caching in production:**
+
+```php
+$router = Router::create()
+    ->enableCache(__DIR__ . '/../var/cache/routes.php', $_ENV['APP_KEY'])
+    ->loadRoutes(__DIR__ . '/routes.php');
+```
+
+| Mode | 50 Routes | 200 Routes |
+|------|-----------|------------|
+| No cache | ~2-5ms | ~5-15ms |
+| With cache | ~0.1ms | ~0.2ms |
+
+### Route Matching Complexity
+
+| Route Type | Complexity | Example |
+|------------|------------|---------|
+| Static | O(1) | `/users`, `/api/health` |
+| Dynamic | O(n) | `/users/{id}`, `/posts/{slug}` |
+
+**Tips:**
+- Static routes are instant (hash lookup)
+- Dynamic routes loop through candidates
+- Define most-used routes first
+- Keep dynamic routes under 500 for best performance
+
+### Memory
+
+- Route cache uses OPcache (no memory parsing)
+- ~1KB per route in memory
+- 100 routes ≈ 100KB memory footprint
+
+## Security Best Practices
+
+### Open Redirect Prevention
+
+**Never redirect to user input without validation:**
+
+```php
+// DANGEROUS - Open Redirect vulnerability!
+$r->get('/goto', function ($request) {
+    $url = $request->getQueryParams()['url'];
+    return Response::redirect($url);  // Attacker: ?url=https://evil.com
+});
+
+// SAFE - Whitelist or validate
+$r->get('/goto', function ($request) {
+    $url = $request->getQueryParams()['url'] ?? '/';
+    $allowed = ['/', '/dashboard', '/profile'];
+
+    if (!in_array($url, $allowed, true)) {
+        return Response::error('Invalid redirect', 400);
+    }
+
+    return Response::redirect($url);
+});
+```
+
+### CSRF Protection
+
+This router does **not** include CSRF protection. For state-changing operations:
+
+```php
+// Option 1: Use a CSRF middleware
+$r->middlewareGroup([CsrfMiddleware::class], function ($r) {
+    $r->post('/users', [UserController::class, 'store']);
+    $r->delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
+// Option 2: For SPAs - use SameSite cookies + custom header
+// Frontend sends: X-Requested-With: XMLHttpRequest
+// Backend validates header presence
+```
+
+### Input Validation
+
+Route parameter types (`{id:int}`) validate format, **not business logic:**
+
+```php
+// {id:int} ensures $id is an integer, but NOT that:
+// - The user exists
+// - The current user can access it
+// - The ID is within valid range
+
+public function show(ServerRequestInterface $request, int $id): ResponseInterface
+{
+    // Always validate business logic!
+    $user = $this->userRepository->find($id);
+
+    if ($user === null) {
+        return Response::notFound('User', $id);
+    }
+
+    if (!$this->canAccess($request, $user)) {
+        return Response::forbidden();
+    }
+
+    return Response::success($user);
+}
+```
+
+### Debug Mode
+
+**Never enable debug mode in production:**
+
+```php
+// Debug mode exposes:
+// - Full exception messages
+// - Stack traces
+// - File paths
+// - Internal error details
+
+// .env.production
+APP_DEBUG=false
+APP_ENV=production
+```
+
 ## Testing
 
 ```bash

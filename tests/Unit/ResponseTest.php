@@ -4,11 +4,19 @@ declare(strict_types=1);
 
 namespace Hd3r\Router\Tests\Unit;
 
+use Hd3r\Router\Contract\ResponderInterface;
 use Hd3r\Router\Response;
+use Hd3r\Router\Service\JsonResponder;
+use Hd3r\Router\Service\RfcResponder;
 use PHPUnit\Framework\TestCase;
 
 class ResponseTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Response::reset();
+    }
+
     public function testSuccessResponse(): void
     {
         $response = Response::success(['id' => 1, 'name' => 'Test']);
@@ -254,5 +262,108 @@ class ResponseTest extends TestCase
         $response = Response::html('<h1>Error</h1>', 500);
 
         $this->assertSame(500, $response->getStatusCode());
+    }
+
+    // ==================== Responder Tests ====================
+
+    public function testGetResponderReturnsJsonResponderByDefault(): void
+    {
+        $responder = Response::getResponder();
+
+        $this->assertInstanceOf(JsonResponder::class, $responder);
+    }
+
+    public function testSetResponderChangesResponder(): void
+    {
+        $rfcResponder = new RfcResponder('https://example.com/errors');
+
+        Response::setResponder($rfcResponder);
+
+        $this->assertSame($rfcResponder, Response::getResponder());
+    }
+
+    public function testSetResponderAffectsContentType(): void
+    {
+        Response::setResponder(new RfcResponder());
+
+        $response = Response::error('Not found', 404);
+
+        $this->assertSame('application/problem+json', $response->getHeaderLine('Content-Type'));
+    }
+
+    public function testSetResponderAffectsErrorFormat(): void
+    {
+        Response::setResponder(new RfcResponder('https://api.example.com/errors'));
+
+        $response = Response::error('Not found', 404, 'NOT_FOUND');
+        $body = json_decode((string) $response->getBody(), true);
+
+        // RFC 7807 format
+        $this->assertArrayHasKey('type', $body);
+        $this->assertArrayHasKey('title', $body);
+        $this->assertSame('https://api.example.com/errors/not-found', $body['type']);
+        $this->assertSame('Not found', $body['title']);
+
+        // NOT JsonResponder format
+        $this->assertArrayNotHasKey('success', $body);
+    }
+
+    public function testResetRestoresDefaultResponder(): void
+    {
+        Response::setResponder(new RfcResponder());
+
+        // Verify it's changed
+        $this->assertInstanceOf(RfcResponder::class, Response::getResponder());
+
+        // Reset
+        Response::reset();
+
+        // Verify it's back to default
+        $this->assertInstanceOf(JsonResponder::class, Response::getResponder());
+    }
+
+    public function testResetAffectsSubsequentResponses(): void
+    {
+        Response::setResponder(new RfcResponder());
+
+        // Response with RFC format
+        $response1 = Response::error('Test', 400);
+        $this->assertSame('application/problem+json', $response1->getHeaderLine('Content-Type'));
+
+        // Reset
+        Response::reset();
+
+        // Response with JSON format
+        $response2 = Response::error('Test', 400);
+        $this->assertSame('application/json', $response2->getHeaderLine('Content-Type'));
+    }
+
+    public function testCustomResponder(): void
+    {
+        $customResponder = new class () implements ResponderInterface {
+            public function formatSuccess(mixed $data, ?string $message = null, ?array $meta = null): array
+            {
+                return ['custom' => true, 'payload' => $data];
+            }
+
+            public function formatError(string $message, ?string $code = null, ?array $details = null): array
+            {
+                return ['custom_error' => true, 'msg' => $message];
+            }
+
+            public function getContentType(): string
+            {
+                return 'application/vnd.custom+json';
+            }
+        };
+
+        Response::setResponder($customResponder);
+
+        $response = Response::success(['test' => 1]);
+        $body = json_decode((string) $response->getBody(), true);
+
+        $this->assertSame('application/vnd.custom+json', $response->getHeaderLine('Content-Type'));
+        $this->assertTrue($body['custom']);
+        $this->assertSame(['test' => 1], $body['payload']);
     }
 }
