@@ -26,13 +26,13 @@ class Route
         public readonly mixed $handler,
         public array $middleware = [],
         public ?string $name = null
-    ) {}
+    ) {
+    }
 
     /**
      * Fluent setter for middleware.
      *
      * @param string|array<string|object>|object $middleware Middleware class name(s) or instance(s)
-     * @return self
      */
     public function middleware(string|array|object $middleware): self
     {
@@ -45,7 +45,6 @@ class Route
      * Fluent setter for route name.
      *
      * @param string $name Route name for URL generation (e.g., 'users.show')
-     * @return self
      */
     public function name(string $name): self
     {
@@ -59,7 +58,6 @@ class Route
      * Required for OPcache-friendly route caching.
      *
      * @param array{methods: string[], pattern: string, handler: mixed, middleware?: array, name?: string|null} $data Exported data
-     * @return self
      */
     public static function __set_state(array $data): self
     {

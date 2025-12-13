@@ -31,17 +31,18 @@ class FullStackTest extends TestCase
 
     public function testFullRequestCycle(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users', fn($req) => Response::success(['users' => []]));
-    $r->get('/users/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
-    $r->post('/users', fn($req) => Response::created(['id' => 1]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users', fn($req) => Response::success(['users' => []]));
+                    $r->get('/users/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+                    $r->post('/users', fn($req) => Response::created(['id' => 1]));
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);
@@ -71,34 +72,35 @@ PHP
     public function testMiddlewareExecution(): void
     {
         // Use anonymous class via Closure to avoid class redefinition
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
+                use Psr\Http\Message\ResponseInterface;
+                use Psr\Http\Message\ServerRequestInterface;
+                use Psr\Http\Server\MiddlewareInterface;
+                use Psr\Http\Server\RequestHandlerInterface;
 
-return function (RouteCollector $r) {
-    $authMiddleware = new class implements MiddlewareInterface {
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-        {
-            $auth = $request->getHeaderLine('Authorization');
-            if ($auth !== 'Bearer valid-token') {
-                return Response::unauthorized();
-            }
-            $request = $request->withAttribute('user', 'authenticated-user');
-            return $handler->handle($request);
-        }
-    };
+                return function (RouteCollector $r) {
+                    $authMiddleware = new class implements MiddlewareInterface {
+                        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+                        {
+                            $auth = $request->getHeaderLine('Authorization');
+                            if ($auth !== 'Bearer valid-token') {
+                                return Response::unauthorized();
+                            }
+                            $request = $request->withAttribute('user', 'authenticated-user');
+                            return $handler->handle($request);
+                        }
+                    };
 
-    $r->get('/public', fn($req) => Response::success(['public' => true]));
-    $r->get('/protected', fn($req) => Response::success([
-        'user' => $req->getAttribute('user')
-    ]))->middleware($authMiddleware);
-};
-PHP
+                    $r->get('/public', fn($req) => Response::success(['public' => true]));
+                    $r->get('/protected', fn($req) => Response::success([
+                        'user' => $req->getAttribute('user')
+                    ]))->middleware($authMiddleware);
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);
@@ -123,34 +125,35 @@ PHP
 
     public function testRouteParametersAvailableInMiddleware(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
+                use Psr\Http\Message\ResponseInterface;
+                use Psr\Http\Message\ServerRequestInterface;
+                use Psr\Http\Server\MiddlewareInterface;
+                use Psr\Http\Server\RequestHandlerInterface;
 
-return function (RouteCollector $r) {
-    $paramMiddleware = new class implements MiddlewareInterface {
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-        {
-            // Verify route params are available BEFORE handler
-            $id = $request->getAttribute('id');
-            $response = $handler->handle($request);
+                return function (RouteCollector $r) {
+                    $paramMiddleware = new class implements MiddlewareInterface {
+                        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+                        {
+                            // Verify route params are available BEFORE handler
+                            $id = $request->getAttribute('id');
+                            $response = $handler->handle($request);
 
-            // Modify response to prove middleware saw the ID
-            $body = json_decode((string) $response->getBody(), true);
-            $body['data']['middleware_saw_id'] = ($id === 42);
-            return Response::success($body['data']);
-        }
-    };
+                            // Modify response to prove middleware saw the ID
+                            $body = json_decode((string) $response->getBody(), true);
+                            $body['data']['middleware_saw_id'] = ($id === 42);
+                            return Response::success($body['data']);
+                        }
+                    };
 
-    $r->get('/items/{id:int}', fn($req, int $id) => Response::success(['id' => $id]))
-        ->middleware($paramMiddleware);
-};
-PHP
+                    $r->get('/items/{id:int}', fn($req, int $id) => Response::success(['id' => $id]))
+                        ->middleware($paramMiddleware);
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);
@@ -165,16 +168,17 @@ PHP
 
     public function testNamedRoutesAndUrlGeneration(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users/{id}', fn($req) => Response::success([]))->name('users.show');
-    $r->get('/posts/{year}/{slug}', fn($req) => Response::success([]))->name('posts.show');
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users/{id}', fn($req) => Response::success([]))->name('users.show');
+                    $r->get('/posts/{year}/{slug}', fn($req) => Response::success([]))->name('posts.show');
+                };
+                PHP
         );
 
         $router = Router::create([
@@ -199,38 +203,39 @@ PHP
 
     public function testGroupsAndMiddlewareGroups(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
+                use Psr\Http\Message\ResponseInterface;
+                use Psr\Http\Message\ServerRequestInterface;
+                use Psr\Http\Server\MiddlewareInterface;
+                use Psr\Http\Server\RequestHandlerInterface;
 
-return function (RouteCollector $r) {
-    $authMiddleware = new class implements MiddlewareInterface {
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-        {
-            $auth = $request->getHeaderLine('Authorization');
-            if ($auth !== 'Bearer valid-token') {
-                return Response::unauthorized();
-            }
-            return $handler->handle($request);
-        }
-    };
+                return function (RouteCollector $r) {
+                    $authMiddleware = new class implements MiddlewareInterface {
+                        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+                        {
+                            $auth = $request->getHeaderLine('Authorization');
+                            if ($auth !== 'Bearer valid-token') {
+                                return Response::unauthorized();
+                            }
+                            return $handler->handle($request);
+                        }
+                    };
 
-    $r->group('/api', function (RouteCollector $r) use ($authMiddleware) {
-        $r->group('/v1', function (RouteCollector $r) use ($authMiddleware) {
-            $r->get('/public', fn($req) => Response::success(['version' => 'v1']));
+                    $r->group('/api', function (RouteCollector $r) use ($authMiddleware) {
+                        $r->group('/v1', function (RouteCollector $r) use ($authMiddleware) {
+                            $r->get('/public', fn($req) => Response::success(['version' => 'v1']));
 
-            $r->middlewareGroup($authMiddleware, function (RouteCollector $r) {
-                $r->get('/private', fn($req) => Response::success(['private' => true]));
-            });
-        });
-    });
-};
-PHP
+                            $r->middlewareGroup($authMiddleware, function (RouteCollector $r) {
+                                $r->get('/private', fn($req) => Response::success(['private' => true]));
+                            });
+                        });
+                    });
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);
@@ -252,14 +257,15 @@ PHP
 
     public function testErrorHandlingInDebugMode(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \RuntimeException('Test error'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \RuntimeException('Test error'));
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);
@@ -273,14 +279,15 @@ PHP
 
     public function testErrorHandlingInProductionMode(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \RuntimeException('Sensitive error info'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \RuntimeException('Sensitive error info'));
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => false])->loadRoutes($this->routesFile);
@@ -294,15 +301,16 @@ PHP
 
     public function testHooksReceiveCorrectData(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/test/{id}', fn($req, $id) => Response::success(['id' => $id]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/test/{id}', fn($req, $id) => Response::success(['id' => $id]));
+                };
+                PHP
         );
 
         $dispatchData = null;
@@ -322,15 +330,16 @@ PHP
 
     public function testBasePathHandling(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users', fn($req) => Response::success(['users' => []]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users', fn($req) => Response::success(['users' => []]));
+                };
+                PHP
         );
 
         $router = Router::create([
@@ -361,11 +370,12 @@ PHP
 
     public function testThrowsOnInvalidRoutesFile(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-// Returns string instead of callable
-return 'not a callable';
-PHP
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                // Returns string instead of callable
+                return 'not a callable';
+                PHP
         );
 
         $router = Router::create(['debug' => true])->loadRoutes($this->routesFile);

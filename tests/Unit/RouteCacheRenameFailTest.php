@@ -34,7 +34,7 @@ class RouteCacheRenameFailTest extends TestCase
     protected function setUp(): void
     {
         $this->cacheDir = sys_get_temp_dir() . '/router-rename-test-' . uniqid();
-        mkdir($this->cacheDir, 0755, true);
+        mkdir($this->cacheDir, 0o755, true);
         $this->cacheFile = $this->cacheDir . '/routes.cache.php';
 
         // Reset the mock flag

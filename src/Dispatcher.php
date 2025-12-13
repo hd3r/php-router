@@ -29,13 +29,15 @@ class Dispatcher
     public function __construct(
         private readonly array $staticRoutes,
         private readonly array $dynamicRoutes
-    ) {}
+    ) {
+    }
 
     /**
      * Match a request method and URI to a route.
      *
      * @param string $method HTTP method
      * @param string $uri Request URI
+     *
      * @return array{0: int, 1: mixed, 2: array, 3: array} [Status, Route|AllowedMethods, Params, Casts]
      */
     public function dispatch(string $method, string $uri): array
@@ -65,6 +67,7 @@ class Dispatcher
      *
      * @param string $method HTTP method
      * @param string $uri Request URI
+     *
      * @return array{0: int, 1: Route, 2: array<string, string>, 3: array<string, string>}|null Match result or null
      */
     private function dispatchDynamic(string $method, string $uri): ?array
@@ -94,6 +97,7 @@ class Dispatcher
      * Get all allowed methods for a URI (for 405 response).
      *
      * @param string $uri Request URI
+     *
      * @return string[] Allowed HTTP methods
      */
     private function getAllowedMethods(string $uri): array

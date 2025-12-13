@@ -21,7 +21,7 @@ class CastingTest extends TestCase
     public function testIntCastingValidValues(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -35,7 +35,7 @@ class CastingTest extends TestCase
     public function testIntCastingRejectsLeadingZero(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -46,7 +46,7 @@ class CastingTest extends TestCase
     public function testIntCastingRejectsScientificNotation(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -58,7 +58,7 @@ class CastingTest extends TestCase
     public function testIntCastingRejectsFloat(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -70,7 +70,7 @@ class CastingTest extends TestCase
     public function testIntCastingRejectsNonNumeric(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -82,7 +82,7 @@ class CastingTest extends TestCase
     public function testIntCastingOverflowCheck(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -97,7 +97,7 @@ class CastingTest extends TestCase
     public function testFloatCastingValidValues(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{val:float}', fn($req, float $val) => Response::success(['val' => $val]));
+        $collector->get('/test/{val:float}', fn ($req, float $val) => Response::success(['val' => $val]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -110,7 +110,7 @@ class CastingTest extends TestCase
     public function testFloatCastingRejectsScientificNotation(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{val:float}', fn($req, float $val) => Response::success(['val' => $val]));
+        $collector->get('/test/{val:float}', fn ($req, float $val) => Response::success(['val' => $val]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -122,7 +122,7 @@ class CastingTest extends TestCase
     public function testFloatCastingRejectsTrailingDot(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{val:float}', fn($req, float $val) => Response::success(['val' => $val]));
+        $collector->get('/test/{val:float}', fn ($req, float $val) => Response::success(['val' => $val]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -136,7 +136,7 @@ class CastingTest extends TestCase
     public function testBoolCastingValidValues(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{flag:bool}', fn($req, bool $flag) => Response::success(['flag' => $flag]));
+        $collector->get('/test/{flag:bool}', fn ($req, bool $flag) => Response::success(['flag' => $flag]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -160,7 +160,7 @@ class CastingTest extends TestCase
     public function testBoolCastingRejectsInvalidValues(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{flag:bool}', fn($req, bool $flag) => Response::success(['flag' => $flag]));
+        $collector->get('/test/{flag:bool}', fn ($req, bool $flag) => Response::success(['flag' => $flag]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -176,7 +176,7 @@ class CastingTest extends TestCase
     public function testNoCastingKeepsString(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{name}', fn($req, string $name) => Response::success(['name' => $name]));
+        $collector->get('/test/{name}', fn ($req, string $name) => Response::success(['name' => $name]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 

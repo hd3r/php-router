@@ -25,12 +25,14 @@ class MiddlewareHandler implements RequestHandlerInterface
     public function __construct(
         private readonly MiddlewareInterface $middleware,
         private readonly RequestHandlerInterface $next
-    ) {}
+    ) {
+    }
 
     /**
      * Handle the request by processing middleware and passing to next handler.
      *
      * @param ServerRequestInterface $request PSR-7 request
+     *
      * @return ResponseInterface PSR-7 response
      */
     public function handle(ServerRequestInterface $request): ResponseInterface

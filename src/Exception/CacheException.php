@@ -13,7 +13,6 @@ class CacheException extends RouterException
      * Create exception for unwritable directory.
      *
      * @param string $directory Directory path
-     * @return self
      */
     public static function directoryNotWritable(string $directory): self
     {
@@ -29,7 +28,6 @@ class CacheException extends RouterException
      * Create exception for write failure.
      *
      * @param string $file File path
-     * @return self
      */
     public static function writeFailed(string $file): self
     {
@@ -43,8 +41,6 @@ class CacheException extends RouterException
 
     /**
      * Create exception for invalid signature.
-     *
-     * @return self
      */
     public static function invalidSignature(): self
     {

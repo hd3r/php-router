@@ -94,7 +94,7 @@ class RouteTest extends TestCase
 
     public function testHandlerCanBeClosure(): void
     {
-        $closure = fn() => 'test';
+        $closure = fn () => 'test';
         $route = new Route(['GET'], '/test', $closure);
 
         $this->assertSame($closure, $route->handler);
@@ -102,8 +102,10 @@ class RouteTest extends TestCase
 
     public function testMiddlewareAcceptsObject(): void
     {
-        $middlewareInstance = new class {
-            public function process(): void {}
+        $middlewareInstance = new class () {
+            public function process(): void
+            {
+            }
         };
 
         $route = new Route(['GET'], '/test', 'handler');

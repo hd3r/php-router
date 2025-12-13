@@ -25,7 +25,7 @@ class RouteCacheVfsTest extends TestCase
     public function testSaveThrowsWhenDirectoryNotWritable(): void
     {
         // Create a read-only directory that cannot have subdirs created
-        $dir = vfsStream::newDirectory('readonly', 0444)->at($this->root);
+        $dir = vfsStream::newDirectory('readonly', 0o444)->at($this->root);
 
         $cache = new RouteCache(vfsStream::url('cache/readonly/subdir/routes.php'));
 
@@ -37,14 +37,14 @@ class RouteCacheVfsTest extends TestCase
     public function testSaveThrowsWhenFileWriteFails(): void
     {
         // Create directory but make it non-writable after creation
-        $dir = vfsStream::newDirectory('writable', 0755)->at($this->root);
+        $dir = vfsStream::newDirectory('writable', 0o755)->at($this->root);
 
         // Create the cache file
         $cache = new RouteCache(vfsStream::url('cache/writable/routes.php'));
         $cache->save(['initial' => true]);
 
         // Make directory read-only so temp file creation fails
-        $dir->chmod(0000);
+        $dir->chmod(0o000);
 
         $this->expectException(CacheException::class);
 
@@ -64,12 +64,12 @@ class RouteCacheVfsTest extends TestCase
     public function testLoadReturnsNullWhenFileUnreadable(): void
     {
         // Create a readable file first
-        $file = vfsStream::newFile('unreadable.php', 0644)
+        $file = vfsStream::newFile('unreadable.php', 0o644)
             ->withContent("<?php\nreturn ['test'];")
             ->at($this->root);
 
         // Make it unreadable
-        $file->chmod(0000);
+        $file->chmod(0o000);
 
         $cache = new RouteCache(vfsStream::url('cache/unreadable.php'));
 
@@ -147,7 +147,7 @@ class RouteCacheVfsTest extends TestCase
     public function testSaveWithExistingDirectoryWorks(): void
     {
         // Pre-create the directory
-        vfsStream::newDirectory('existing', 0755)->at($this->root);
+        vfsStream::newDirectory('existing', 0o755)->at($this->root);
 
         $cache = new RouteCache(vfsStream::url('cache/existing/routes.php'));
         $cache->save(['test' => true]);

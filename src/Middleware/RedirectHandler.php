@@ -25,12 +25,14 @@ class RedirectHandler implements RequestHandlerInterface
     public function __construct(
         private readonly string $target,
         private readonly int $status = 302
-    ) {}
+    ) {
+    }
 
     /**
      * Handle the request by returning a redirect response.
      *
      * @param ServerRequestInterface $request PSR-7 request
+     *
      * @return ResponseInterface Redirect response
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -48,8 +50,6 @@ class RedirectHandler implements RequestHandlerInterface
 
     /**
      * Get target URL (for serialization).
-     *
-     * @return string
      */
     public function getTarget(): string
     {
@@ -58,8 +58,6 @@ class RedirectHandler implements RequestHandlerInterface
 
     /**
      * Get status code (for serialization).
-     *
-     * @return int
      */
     public function getStatus(): int
     {
@@ -72,7 +70,6 @@ class RedirectHandler implements RequestHandlerInterface
      * Required for OPcache-friendly route caching.
      *
      * @param array{target: string, status: int} $data Exported data
-     * @return self
      */
     public static function __set_state(array $data): self
     {

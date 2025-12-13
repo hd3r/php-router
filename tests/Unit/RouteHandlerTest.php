@@ -18,7 +18,7 @@ class RouteHandlerTest extends TestCase
 {
     public function testHandlesClosure(): void
     {
-        $handler = new RouteHandler(fn($req) => Response::success(['ok' => true]));
+        $handler = new RouteHandler(fn ($req) => Response::success(['ok' => true]));
 
         $response = $handler->handle(new ServerRequest('GET', '/test'));
 
@@ -27,7 +27,7 @@ class RouteHandlerTest extends TestCase
 
     public function testHandlesClosureWithParameters(): void
     {
-        $handler = new RouteHandler(fn($req, $id, $name) => Response::success([
+        $handler = new RouteHandler(fn ($req, $id, $name) => Response::success([
             'id' => $id,
             'name' => $name,
         ]));
@@ -68,7 +68,7 @@ class RouteHandlerTest extends TestCase
 
     public function testHandlesPsr15RequestHandler(): void
     {
-        $psr15Handler = new class implements RequestHandlerInterface {
+        $psr15Handler = new class () implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 return Response::success(['psr15' => true]);
@@ -93,7 +93,7 @@ class RouteHandlerTest extends TestCase
 
     public function testThrowsOnNonResponseReturn(): void
     {
-        $handler = new RouteHandler(fn($req) => ['array' => 'not allowed']);
+        $handler = new RouteHandler(fn ($req) => ['array' => 'not allowed']);
 
         $this->expectException(RouterException::class);
         $this->expectExceptionMessage('must return ResponseInterface');

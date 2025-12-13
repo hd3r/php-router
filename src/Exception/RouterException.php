@@ -28,8 +28,6 @@ class RouterException extends \Exception
 
     /**
      * Get the debug message with additional details.
-     *
-     * @return string|null
      */
     public function getDebugMessage(): ?string
     {

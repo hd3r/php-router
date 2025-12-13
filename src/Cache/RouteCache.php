@@ -36,6 +36,7 @@ class RouteCache
      * Save dispatch data to cache.
      *
      * @param array $data The dispatch data to cache
+     *
      * @throws \LogicException If data contains Closures
      * @throws CacheException If writing fails
      */
@@ -52,7 +53,7 @@ class RouteCache
         // Ensure cache directory exists
         $directory = dirname($this->cacheFile);
         if (!is_dir($directory)) {
-            if (!mkdir($directory, 0755, true) && !is_dir($directory)) {
+            if (!mkdir($directory, 0o755, true) && !is_dir($directory)) {
                 throw CacheException::directoryNotWritable($directory);
             }
         }
@@ -87,8 +88,9 @@ class RouteCache
     /**
      * Load dispatch data from cache.
      *
-     * @return array|null The cached dispatch data, or null if not available
      * @throws CacheException If signature validation fails
+     *
+     * @return array|null The cached dispatch data, or null if not available
      */
     public function load(): ?array
     {
@@ -154,7 +156,6 @@ class RouteCache
      * Check if cache exists and is fresh.
      *
      * @param int|null $maxAge Maximum age in seconds (null for no limit)
-     * @return bool
      */
     public function isFresh(?int $maxAge = null): bool
     {
@@ -187,6 +188,7 @@ class RouteCache
      * Generate HMAC signature for data.
      *
      * @param string $data Data to sign
+     *
      * @return string HMAC-SHA256 signature
      */
     private function generateSignature(string $data): string
@@ -199,7 +201,6 @@ class RouteCache
      *
      * @param string $data Data that was signed
      * @param string $signature Signature to verify
-     * @return bool
      */
     private function verifySignature(string $data, string $signature): bool
     {
@@ -209,8 +210,6 @@ class RouteCache
 
     /**
      * Check if caching is enabled.
-     *
-     * @return bool
      */
     public function isEnabled(): bool
     {
@@ -221,7 +220,6 @@ class RouteCache
      * Enable or disable caching.
      *
      * @param bool $enabled Enable caching
-     * @return self
      */
     public function setEnabled(bool $enabled): self
     {
@@ -231,8 +229,6 @@ class RouteCache
 
     /**
      * Get the cache file path.
-     *
-     * @return string
      */
     public function getCacheFile(): string
     {

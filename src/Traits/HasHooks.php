@@ -19,7 +19,6 @@ trait HasHooks
      *
      * @param string $event Event name (e.g., 'dispatch', 'notFound', 'error')
      * @param callable $callback Callback receiving event data array
-     * @return static
      */
     public function on(string $event, callable $callback): static
     {
@@ -75,8 +74,6 @@ trait HasHooks
      * Check if STDERR is available.
      *
      * Isolated for testability (STDERR always exists in CLI).
-     *
-     * @return bool
      */
     protected function hasStderr(): bool
     {

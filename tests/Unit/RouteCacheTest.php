@@ -16,7 +16,7 @@ class RouteCacheTest extends TestCase
     protected function setUp(): void
     {
         $this->cacheDir = sys_get_temp_dir() . '/router-test-' . uniqid();
-        mkdir($this->cacheDir, 0755, true);
+        mkdir($this->cacheDir, 0o755, true);
         $this->cacheFile = $this->cacheDir . '/routes.cache.php';
     }
 
@@ -24,7 +24,7 @@ class RouteCacheTest extends TestCase
     {
         // Clean up cache files
         if (file_exists($this->cacheFile)) {
-            chmod($this->cacheFile, 0644); // Restore permissions before delete
+            chmod($this->cacheFile, 0o644); // Restore permissions before delete
             unlink($this->cacheFile);
         }
         if (is_dir($this->cacheDir)) {
@@ -256,12 +256,12 @@ class RouteCacheTest extends TestCase
         $cache->save(['test' => true]);
 
         // Make file unreadable
-        chmod($this->cacheFile, 0000);
+        chmod($this->cacheFile, 0o000);
 
         $loaded = $cache->load();
 
         // Restore permissions for cleanup
-        chmod($this->cacheFile, 0644);
+        chmod($this->cacheFile, 0o644);
 
         $this->assertNull($loaded);
     }
@@ -307,7 +307,7 @@ class RouteCacheTest extends TestCase
         $route = new \Hd3r\Router\Route(
             ['GET'],
             '/test',
-            fn() => 'closure handler' // Closure in Route->handler
+            fn () => 'closure handler' // Closure in Route->handler
         );
 
         $data = [
@@ -329,7 +329,7 @@ class RouteCacheTest extends TestCase
             ['GET'],
             '/nested',
             ['SomeClass', 'method'],
-            [fn() => 'middleware closure'] // Closure in middleware array
+            [fn () => 'middleware closure'] // Closure in middleware array
         );
 
         $data = [

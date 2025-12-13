@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Hd3r\Router\Tests\Unit;
 
-use Hd3r\Router\Exception\RouterException;
-use Hd3r\Router\Response;
 use Hd3r\Router\Router;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
@@ -42,15 +40,16 @@ class RouterTest extends TestCase
     {
         $container = $this->createMock(ContainerInterface::class);
 
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/', fn($req) => Response::success(['ok' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/', fn($req) => Response::success(['ok' => true]));
+                };
+                PHP
         );
 
         $router = Router::create()
@@ -63,14 +62,15 @@ PHP
 
     public function testSetDebug(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \RuntimeException('Test error'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \RuntimeException('Test error'));
+                };
+                PHP
         );
 
         // Debug mode shows error details
@@ -83,14 +83,15 @@ PHP
         $this->assertStringContainsString('Test error', $body['message']);
 
         // Non-debug mode hides details
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \RuntimeException('Secret error'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \RuntimeException('Secret error'));
+                };
+                PHP
         );
 
         $router2 = Router::create()
@@ -104,15 +105,16 @@ PHP
 
     public function testSetBasePath(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users', fn($req) => Response::success(['users' => []]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users', fn($req) => Response::success(['users' => []]));
+                };
+                PHP
         );
 
         $router = Router::create()
@@ -133,14 +135,15 @@ PHP
         $cacheFile = sys_get_temp_dir() . '/router_cache_test_' . uniqid() . '.php';
 
         // Use array handler instead of Closure (Closures can't be cached)
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/cached', ['CachedController', 'index']);
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/cached', ['CachedController', 'index']);
+                };
+                PHP
         );
 
         $router = Router::create(['debug' => false])  // Cache only works in non-debug
@@ -158,15 +161,16 @@ PHP
 
     public function testUrlGeneration(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users/{id}', fn($req) => Response::success([]))->name('users.show');
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users/{id}', fn($req) => Response::success([]))->name('users.show');
+                };
+                PHP
         );
 
         $router = Router::create([
@@ -186,15 +190,16 @@ PHP
 
     public function testHooksOnRouter(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/test', fn($req) => Response::success(['ok' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/test', fn($req) => Response::success(['ok' => true]));
+                };
+                PHP
         );
 
         $dispatched = false;
@@ -214,15 +219,16 @@ PHP
         $_ENV['APP_DEBUG'] = 'true';
         $_ENV['APP_URL'] = 'https://env.example.com';
 
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \Exception('Test'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \Exception('Test'));
+                };
+                PHP
         );
 
         $router = Router::create()->loadRoutes($this->routesFile);
@@ -250,14 +256,15 @@ PHP
 
     public function testErrorHookTriggered(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/error', fn($req) => throw new \RuntimeException('Boom'));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/error', fn($req) => throw new \RuntimeException('Boom'));
+                };
+                PHP
         );
 
         $errorData = null;
@@ -277,16 +284,17 @@ PHP
     {
         $cacheFile = sys_get_temp_dir() . '/router_url_cache_' . uniqid() . '.php';
 
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/users/{id}', [stdClass::class, 'show'])->name('users.show');
-    $r->get('/posts/{slug}', [stdClass::class, 'view'])->name('posts.view');
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/users/{id}', [stdClass::class, 'show'])->name('users.show');
+                    $r->get('/posts/{slug}', [stdClass::class, 'view'])->name('posts.view');
+                };
+                PHP
         );
 
         // First request: creates cache
@@ -315,29 +323,31 @@ PHP
     {
         $cacheFile = sys_get_temp_dir() . '/router_cache_named_' . uniqid() . '.php';
 
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/api/items/{id}', fn($req, $id) => Response::success(['id' => $id]))->name('items.show');
-    $r->get('/api/posts/{slug}', fn($req, $slug) => Response::success(['slug' => $slug]))->name('posts.view');
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/api/items/{id}', fn($req, $id) => Response::success(['id' => $id]))->name('items.show');
+                    $r->get('/api/posts/{slug}', fn($req, $slug) => Response::success(['slug' => $slug]))->name('posts.view');
+                };
+                PHP
         );
 
         // First: Create cache file (debug=false) - Uses Closures so cache save will fail
         // We need to use array handlers for cache to work
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
 
-return function (RouteCollector $r) {
-    $r->get('/api/items/{id}', ['ItemController', 'show'])->name('items.show');
-    $r->get('/api/posts/{slug}', ['PostController', 'view'])->name('posts.view');
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/api/items/{id}', ['ItemController', 'show'])->name('items.show');
+                    $r->get('/api/posts/{slug}', ['PostController', 'view'])->name('posts.view');
+                };
+                PHP
         );
 
         $router1 = Router::create(['debug' => false])
@@ -372,16 +382,17 @@ PHP
 
     public function testStrictTrailingSlashDistinguishesRoutes(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/api/', fn($req) => Response::success(['route' => 'with_slash']));
-    $r->get('/api', fn($req) => Response::success(['route' => 'without_slash']));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/api/', fn($req) => Response::success(['route' => 'with_slash']));
+                    $r->get('/api', fn($req) => Response::success(['route' => 'without_slash']));
+                };
+                PHP
         );
 
         $router = Router::create(['trailingSlash' => 'strict'])
@@ -402,16 +413,17 @@ PHP
 
     public function testIgnoreTrailingSlashNormalizesRoutes(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    // Even if defined with slash, ignore mode normalizes to /api
-    $r->get('/api/', fn($req) => Response::success(['matched' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    // Even if defined with slash, ignore mode normalizes to /api
+                    $r->get('/api/', fn($req) => Response::success(['matched' => true]));
+                };
+                PHP
         );
 
         $router = Router::create(['trailingSlash' => 'ignore'])

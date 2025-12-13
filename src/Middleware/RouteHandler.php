@@ -26,15 +26,17 @@ class RouteHandler implements RequestHandlerInterface
     public function __construct(
         private readonly mixed $handler,
         private readonly ?ContainerInterface $container = null
-    ) {}
+    ) {
+    }
 
     /**
      * Handle the request by executing the route handler.
      *
      * @param ServerRequestInterface $request PSR-7 request
-     * @return ResponseInterface PSR-7 response
      *
      * @throws RouterException If handler is invalid or does not return ResponseInterface
+     *
+     * @return ResponseInterface PSR-7 response
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {

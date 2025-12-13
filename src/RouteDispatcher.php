@@ -11,8 +11,8 @@ use Hd3r\Router\Traits\HasHooks;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * PSR-15 RequestHandler that dispatches requests to routes.
@@ -54,6 +54,7 @@ class RouteDispatcher implements RequestHandlerInterface
      * PSR-15: Handle a request and return a response.
      *
      * @param ServerRequestInterface $request PSR-7 request
+     *
      * @return ResponseInterface PSR-7 response
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -108,6 +109,7 @@ class RouteDispatcher implements RequestHandlerInterface
      * @param string $method HTTP method
      * @param string $uri Request URI
      * @param float $startTime Request start time for duration tracking
+     *
      * @return ResponseInterface PSR-7 response
      */
     private function handleFound(
@@ -166,6 +168,7 @@ class RouteDispatcher implements RequestHandlerInterface
      *
      * @param string $method HTTP method
      * @param string $uri Request URI
+     *
      * @return ResponseInterface 404 response
      */
     private function handleNotFound(string $method, string $uri): ResponseInterface
@@ -180,6 +183,7 @@ class RouteDispatcher implements RequestHandlerInterface
      * @param string $method HTTP method
      * @param string $uri Request URI
      * @param string[] $allowed Allowed HTTP methods
+     *
      * @return ResponseInterface 405 response
      */
     private function handleMethodNotAllowed(string $method, string $uri, array $allowed): ResponseInterface
@@ -196,9 +200,10 @@ class RouteDispatcher implements RequestHandlerInterface
      * Resolve middleware from class name or instance.
      *
      * @param mixed $middleware Middleware class name or instance
-     * @return MiddlewareInterface Resolved middleware
      *
      * @throws RouterException If middleware cannot be resolved
+     *
+     * @return MiddlewareInterface Resolved middleware
      */
     private function resolveMiddleware(mixed $middleware): MiddlewareInterface
     {
@@ -229,9 +234,10 @@ class RouteDispatcher implements RequestHandlerInterface
      *
      * @param string $value Value to cast
      * @param string $key Parameter name for error messages
-     * @return int Casted integer
      *
      * @throws \TypeError If value is not a valid integer
+     *
+     * @return int Casted integer
      */
     private function castInt(string $value, string $key): int
     {
@@ -261,9 +267,10 @@ class RouteDispatcher implements RequestHandlerInterface
      *
      * @param string $value Value to cast
      * @param string $key Parameter name for error messages
-     * @return float Casted float
      *
      * @throws \TypeError If value is not a valid decimal
+     *
+     * @return float Casted float
      */
     private function castFloat(string $value, string $key): float
     {
@@ -284,9 +291,10 @@ class RouteDispatcher implements RequestHandlerInterface
      *
      * @param string $value Value to cast
      * @param string $key Parameter name for error messages
-     * @return bool Casted boolean
      *
      * @throws \TypeError If value is not a valid boolean
+     *
+     * @return bool Casted boolean
      *
      * @codeCoverageIgnore Dead code: regex pattern filters invalid bool values before this is called
      */

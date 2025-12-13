@@ -24,7 +24,7 @@ class HooksTest extends TestCase
         $hookData = null;
 
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/users/{id}', fn($req, $id) => Response::success(['id' => $id]));
+            $r->get('/users/{id}', fn ($req, $id) => Response::success(['id' => $id]));
         });
 
         $dispatcher->on('dispatch', function (array $data) use (&$hookData) {
@@ -47,7 +47,7 @@ class HooksTest extends TestCase
         $hookData = null;
 
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/users', fn($req) => Response::success([]));
+            $r->get('/users', fn ($req) => Response::success([]));
         });
 
         $dispatcher->on('notFound', function (array $data) use (&$hookData) {
@@ -68,7 +68,7 @@ class HooksTest extends TestCase
         $hookData = null;
 
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/users', fn($req) => Response::success([]));
+            $r->get('/users', fn ($req) => Response::success([]));
         });
 
         $dispatcher->on('methodNotAllowed', function (array $data) use (&$hookData) {
@@ -90,7 +90,7 @@ class HooksTest extends TestCase
         $calls = [];
 
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/test', fn($req) => Response::success([]));
+            $r->get('/test', fn ($req) => Response::success([]));
         });
 
         $dispatcher->on('dispatch', function () use (&$calls) {
@@ -110,7 +110,7 @@ class HooksTest extends TestCase
     public function testHookExceptionDoesNotAffectResponse(): void
     {
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/test', fn($req) => Response::success(['ok' => true]));
+            $r->get('/test', fn ($req) => Response::success(['ok' => true]));
         });
 
         $dispatcher->on('dispatch', function () {
@@ -130,13 +130,13 @@ class HooksTest extends TestCase
     public function testHooksCanChainWithFluentApi(): void
     {
         $dispatcher = $this->createDispatcher(function (RouteCollector $r) {
-            $r->get('/test', fn($req) => Response::success([]));
+            $r->get('/test', fn ($req) => Response::success([]));
         });
 
         $result = $dispatcher
-            ->on('dispatch', fn() => null)
-            ->on('notFound', fn() => null)
-            ->on('methodNotAllowed', fn() => null);
+            ->on('dispatch', fn () => null)
+            ->on('notFound', fn () => null)
+            ->on('methodNotAllowed', fn () => null);
 
         $this->assertSame($dispatcher, $result);
     }

@@ -11,7 +11,7 @@ class HasHooksTest extends TestCase
 {
     public function testOnRegistersCallback(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function fireEvent(): void
@@ -32,18 +32,18 @@ class HasHooksTest extends TestCase
 
     public function testOnReturnsSelfForFluent(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
         };
 
-        $result = $obj->on('test', fn() => null);
+        $result = $obj->on('test', fn () => null);
 
         $this->assertSame($obj, $result);
     }
 
     public function testTriggerCallsMultipleCallbacks(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function fireEvent(): void
@@ -67,7 +67,7 @@ class HasHooksTest extends TestCase
 
     public function testTriggerIgnoresUnregisteredEvents(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function fireEvent(): void
@@ -83,7 +83,7 @@ class HasHooksTest extends TestCase
 
     public function testHookExceptionDoesNotInterruptExecution(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function fireEvent(): void
@@ -111,7 +111,7 @@ class HasHooksTest extends TestCase
 
     public function testHandleHookExceptionUsesStderr(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function fireEvent(): void
@@ -136,7 +136,7 @@ class HasHooksTest extends TestCase
     public function testHandleHookExceptionFallsBackToErrorLog(): void
     {
         // Simulate environment without STDERR (e.g., CGI/FPM)
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             // Override the environment check
@@ -165,7 +165,7 @@ class HasHooksTest extends TestCase
 
     public function testHasStderrReturnsTrue(): void
     {
-        $obj = new class {
+        $obj = new class () {
             use HasHooks;
 
             public function checkStderr(): bool

@@ -7,12 +7,12 @@ namespace Hd3r\Router;
 use Hd3r\Router\Cache\RouteCache;
 use Hd3r\Router\Exception\RouterException;
 use Hd3r\Router\Traits\HasHooks;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7Server\ServerRequestCreator;
 
 /**
  * Entry point for the router. Provides fluent API for configuration.
@@ -62,7 +62,6 @@ class Router implements RequestHandlerInterface
      * Factory method for fluent creation.
      *
      * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string} $config
-     * @return self
      */
     public static function create(array $config = []): self
     {
@@ -87,7 +86,6 @@ class Router implements RequestHandlerInterface
      * Set PSR-11 container for dependency injection.
      *
      * @param ContainerInterface $container PSR-11 container
-     * @return self
      */
     public function setContainer(ContainerInterface $container): self
     {
@@ -99,7 +97,6 @@ class Router implements RequestHandlerInterface
      * Enable/disable debug mode.
      *
      * @param bool $debug Enable debug mode
-     * @return self
      */
     public function setDebug(bool $debug): self
     {
@@ -111,7 +108,6 @@ class Router implements RequestHandlerInterface
      * Set base path for all routes.
      *
      * @param string $basePath Base path prefix (e.g., '/api/v1')
-     * @return self
      */
     public function setBasePath(string $basePath): self
     {
@@ -124,7 +120,6 @@ class Router implements RequestHandlerInterface
      *
      * @param string $file Path to cache file
      * @param string|null $signature Cache invalidation key (e.g., app version)
-     * @return self
      */
     public function enableCache(string $file, ?string $signature = null): self
     {
@@ -139,7 +134,6 @@ class Router implements RequestHandlerInterface
      * File must return a callable: function(RouteCollector $r) { ... }
      *
      * @param string $file Path to routes file
-     * @return self
      */
     public function loadRoutes(string $file): self
     {
@@ -154,9 +148,10 @@ class Router implements RequestHandlerInterface
      *
      * @param string $name Route name
      * @param array<string, mixed> $params Route parameters
-     * @return string Generated URL
      *
      * @throws Exception\RouteNotFoundException If route name does not exist
+     *
+     * @return string Generated URL
      */
     public function url(string $name, array $params = []): string
     {
@@ -170,10 +165,11 @@ class Router implements RequestHandlerInterface
      *
      * @param string $name Route name
      * @param array<string, mixed> $params Route parameters
-     * @return string Generated absolute URL
      *
      * @throws Exception\RouteNotFoundException If route name does not exist
      * @throws Exception\RouterException If baseUrl is not configured
+     *
+     * @return string Generated absolute URL
      */
     public function absoluteUrl(string $name, array $params = []): string
     {
@@ -199,6 +195,7 @@ class Router implements RequestHandlerInterface
      * PSR-15: Handle a request and return a response.
      *
      * @param ServerRequestInterface $request PSR-7 request
+     *
      * @return ResponseInterface PSR-7 response
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -229,7 +226,6 @@ class Router implements RequestHandlerInterface
     /**
      * Get or create the dispatcher.
      *
-     * @return RouteDispatcher
      *
      * @throws RouterException If no routes are loaded or routes file is invalid
      */
@@ -313,8 +309,6 @@ class Router implements RequestHandlerInterface
 
     /**
      * Get or create the URL generator.
-     *
-     * @return UrlGenerator
      */
     private function getUrlGenerator(): UrlGenerator
     {

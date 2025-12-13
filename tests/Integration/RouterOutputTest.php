@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
  * These tests require process isolation because they send headers and output.
  *
  * @runTestsInSeparateProcesses
+ *
  * @preserveGlobalState disabled
  */
 class RouterOutputTest extends TestCase
@@ -40,15 +41,16 @@ class RouterOutputTest extends TestCase
      */
     public function testEmitOutputsBody(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/test', fn($req) => Response::success(['message' => 'Hello World']));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/test', fn($req) => Response::success(['message' => 'Hello World']));
+                };
+                PHP
         );
 
         // Simulate $_SERVER for request creation
@@ -72,15 +74,16 @@ PHP
      */
     public function testEmitSendsHeaders(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/test', fn($req) => Response::success(['ok' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/test', fn($req) => Response::success(['ok' => true]));
+                };
+                PHP
         );
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -108,15 +111,16 @@ PHP
      */
     public function testBootStaticMethod(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/boot-test', fn($req) => Response::success(['booted' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/boot-test', fn($req) => Response::success(['booted' => true]));
+                };
+                PHP
         );
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -135,15 +139,16 @@ PHP
      */
     public function testEmitHandles404(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/exists', fn($req) => Response::success([]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/exists', fn($req) => Response::success([]));
+                };
+                PHP
         );
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -165,15 +170,16 @@ PHP
      */
     public function testEmitWithMultipleHeaders(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/redirect', fn($req) => Response::redirect('/new-location', 302));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/redirect', fn($req) => Response::redirect('/new-location', 302));
+                };
+                PHP
         );
 
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -204,15 +210,16 @@ PHP
      */
     public function testRunCompletesWithoutError(): void
     {
-        $this->createRoutesFile(<<<'PHP'
-<?php
-use Hd3r\Router\RouteCollector;
-use Hd3r\Router\Response;
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
 
-return function (RouteCollector $r) {
-    $r->get('/complete', fn($req) => Response::success(['complete' => true]));
-};
-PHP
+                return function (RouteCollector $r) {
+                    $r->get('/complete', fn($req) => Response::success(['complete' => true]));
+                };
+                PHP
         );
 
         $_SERVER['REQUEST_METHOD'] = 'GET';

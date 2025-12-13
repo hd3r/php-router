@@ -24,7 +24,6 @@ final class Response
      * @param mixed $data Response data
      * @param string|null $message Optional success message
      * @param array<string, mixed>|null $meta Optional metadata
-     * @return ResponseInterface
      */
     public static function success(
         mixed $data,
@@ -40,7 +39,6 @@ final class Response
      * @param mixed $data Created resource data
      * @param string|null $message Optional success message
      * @param string|null $location Optional Location header URL
-     * @return ResponseInterface
      */
     public static function created(
         mixed $data,
@@ -61,7 +59,6 @@ final class Response
      *
      * @param mixed $data Response data
      * @param string|null $message Optional success message
-     * @return ResponseInterface
      */
     public static function accepted(mixed $data, ?string $message = null): ResponseInterface
     {
@@ -70,8 +67,6 @@ final class Response
 
     /**
      * 204 No Content response.
-     *
-     * @return ResponseInterface
      */
     public static function noContent(): ResponseInterface
     {
@@ -85,7 +80,6 @@ final class Response
      * @param int $total Total number of items
      * @param int $page Current page number
      * @param int $perPage Items per page
-     * @return ResponseInterface
      */
     public static function paginated(
         array $items,
@@ -116,7 +110,6 @@ final class Response
      * @param int $status HTTP status code (default: 400)
      * @param string|null $code Error code (e.g., 'INVALID_INPUT')
      * @param array<string, mixed>|null $details Additional error details
-     * @return ResponseInterface
      */
     public static function error(
         string $message,
@@ -132,7 +125,6 @@ final class Response
      *
      * @param string|null $resource Resource type (e.g., 'User')
      * @param string|int|null $identifier Resource identifier
-     * @return ResponseInterface
      */
     public static function notFound(
         ?string $resource = null,
@@ -153,11 +145,10 @@ final class Response
      * 401 Unauthorized response.
      *
      * @param string|null $message Custom error message
-     * @return ResponseInterface
      */
     public static function unauthorized(?string $message = null): ResponseInterface
     {
-        $message = $message ?? 'Unauthorized';
+        $message ??= 'Unauthorized';
         return self::json(401, self::errorBody($message, $message, 'UNAUTHORIZED'));
     }
 
@@ -165,11 +156,10 @@ final class Response
      * 403 Forbidden response.
      *
      * @param string|null $message Custom error message
-     * @return ResponseInterface
      */
     public static function forbidden(?string $message = null): ResponseInterface
     {
-        $message = $message ?? 'Forbidden';
+        $message ??= 'Forbidden';
         return self::json(403, self::errorBody($message, $message, 'FORBIDDEN'));
     }
 
@@ -177,7 +167,6 @@ final class Response
      * 422 Validation Error response.
      *
      * @param array<string, string|array<string>> $errors Field => error message(s)
-     * @return ResponseInterface
      */
     public static function validationError(array $errors): ResponseInterface
     {
@@ -193,7 +182,6 @@ final class Response
      * 405 Method Not Allowed response.
      *
      * @param string[] $allowedMethods Allowed HTTP methods
-     * @return ResponseInterface
      */
     public static function methodNotAllowed(array $allowedMethods): ResponseInterface
     {
@@ -210,7 +198,6 @@ final class Response
      * 429 Too Many Requests response.
      *
      * @param int $retryAfter Seconds until retry is allowed
-     * @return ResponseInterface
      */
     public static function tooManyRequests(int $retryAfter): ResponseInterface
     {
@@ -228,7 +215,6 @@ final class Response
      *
      * @param string|null $message Custom error message
      * @param array<string, mixed>|null $debug Debug info (only include in dev!)
-     * @return ResponseInterface
      */
     public static function serverError(
         ?string $message = null,
@@ -247,7 +233,6 @@ final class Response
      *
      * @param string $content HTML content
      * @param int $status HTTP status code (default: 200)
-     * @return ResponseInterface
      */
     public static function html(string $content, int $status = 200): ResponseInterface
     {
@@ -263,7 +248,6 @@ final class Response
      *
      * @param string $content Text content
      * @param int $status HTTP status code (default: 200)
-     * @return ResponseInterface
      */
     public static function text(string $content, int $status = 200): ResponseInterface
     {
@@ -279,7 +263,6 @@ final class Response
      *
      * @param string $url Target URL
      * @param int $status HTTP status code (default: 302)
-     * @return ResponseInterface
      */
     public static function redirect(string $url, int $status = 302): ResponseInterface
     {
@@ -292,7 +275,6 @@ final class Response
      * @param string $content File content
      * @param string $filename Download filename
      * @param string $contentType MIME type (default: 'application/octet-stream')
-     * @return ResponseInterface
      */
     public static function download(
         string $content,
@@ -317,7 +299,6 @@ final class Response
      *
      * @param int $status HTTP status code
      * @param array<string, mixed> $data Response data
-     * @return ResponseInterface
      */
     private static function json(int $status, array $data): ResponseInterface
     {
@@ -334,6 +315,7 @@ final class Response
      * @param mixed $data Response data
      * @param string|null $message Success message
      * @param array<string, mixed>|null $meta Metadata
+     *
      * @return array<string, mixed>
      */
     private static function successBody(mixed $data, ?string $message, ?array $meta = null): array
@@ -361,6 +343,7 @@ final class Response
      * @param string $technicalMessage Technical error message
      * @param string|null $code Error code
      * @param array<string, mixed>|null $details Additional error details
+     *
      * @return array<string, mixed>
      */
     private static function errorBody(

@@ -62,9 +62,10 @@ final class UrlGenerator
      *
      * @param string $name Route name
      * @param array<string, string|int> $params Route parameters
-     * @return string Generated URL
      *
      * @throws RouteNotFoundException If route name does not exist
+     *
+     * @return string Generated URL
      */
     public function url(string $name, array $params = []): string
     {
@@ -79,10 +80,11 @@ final class UrlGenerator
      *
      * @param string $name Route name
      * @param array<string, string|int> $params Route parameters
-     * @return string Generated absolute URL
      *
      * @throws RouteNotFoundException If route name does not exist
      * @throws \RuntimeException If baseUrl is not configured
+     *
+     * @return string Generated absolute URL
      */
     public function absoluteUrl(string $name, array $params = []): string
     {
@@ -99,7 +101,6 @@ final class UrlGenerator
      * Check if a named route exists.
      *
      * @param string $name Route name
-     * @return bool
      */
     public function hasRoute(string $name): bool
     {
@@ -110,9 +111,10 @@ final class UrlGenerator
      * Get a route pattern by name.
      *
      * @param string $name Route name
-     * @return string Route pattern
      *
      * @throws RouteNotFoundException If route name does not exist
+     *
+     * @return string Route pattern
      */
     private function getPatternByName(string $name): string
     {
@@ -133,9 +135,10 @@ final class UrlGenerator
      *
      * @param string $pattern Route pattern
      * @param array<string, string|int> $params Route parameters
-     * @return string URL with replaced parameters
      *
      * @throws \InvalidArgumentException If a required parameter is missing
+     *
+     * @return string URL with replaced parameters
      */
     private function replaceParameters(string $pattern, array $params): string
     {

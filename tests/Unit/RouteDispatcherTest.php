@@ -20,7 +20,7 @@ class RouteDispatcherTest extends TestCase
 {
     public function testMiddlewareFromContainer(): void
     {
-        $middleware = new class implements MiddlewareInterface {
+        $middleware = new class () implements MiddlewareInterface {
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 return Response::success(['from_container' => true]);
@@ -31,7 +31,7 @@ class RouteDispatcherTest extends TestCase
         $container->method('has')->with('TestMiddleware')->willReturn(true);
         $container->method('get')->with('TestMiddleware')->willReturn($middleware);
 
-        $route = new Route(['GET'], '/test', fn($req) => Response::success(['ok' => true]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success(['ok' => true]));
         $route->middleware('TestMiddleware');
 
         $dispatcher = new RouteDispatcher(
@@ -47,7 +47,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testMiddlewareAsClassString(): void
     {
-        $route = new Route(['GET'], '/test', fn($req) => Response::success(['ok' => true]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success(['ok' => true]));
         $route->middleware(TestMiddlewareClass::class);
 
         $dispatcher = new RouteDispatcher(
@@ -63,7 +63,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testInvalidMiddlewareThrows(): void
     {
-        $route = new Route(['GET'], '/test', fn($req) => Response::success([]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success([]));
         $route->middleware('NonExistentMiddleware');
 
         $dispatcher = new RouteDispatcher(
@@ -72,20 +72,20 @@ class RouteDispatcherTest extends TestCase
         );
 
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage("Cannot resolve middleware");
+        $this->expectExceptionMessage('Cannot resolve middleware');
         $dispatcher->handle(new ServerRequest('GET', '/test'));
     }
 
     public function testMiddlewareAsObject(): void
     {
-        $middleware = new class implements MiddlewareInterface {
+        $middleware = new class () implements MiddlewareInterface {
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 return Response::success(['object_middleware' => true]);
             }
         };
 
-        $route = new Route(['GET'], '/test', fn($req) => Response::success(['ok' => true]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success(['ok' => true]));
         $route->middleware($middleware);
 
         $dispatcher = new RouteDispatcher(
@@ -101,7 +101,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testTrailingSlashStrict(): void
     {
-        $route = new Route(['GET'], '/test', fn($req) => Response::success(['ok' => true]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success(['ok' => true]));
 
         $dispatcher = new RouteDispatcher(
             [['GET' => ['/test' => $route]], []],
@@ -121,7 +121,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testTrailingSlashIgnore(): void
     {
-        $route = new Route(['GET'], '/test', fn($req) => Response::success(['ok' => true]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success(['ok' => true]));
 
         $dispatcher = new RouteDispatcher(
             [['GET' => ['/test' => $route]], []],
@@ -141,7 +141,7 @@ class RouteDispatcherTest extends TestCase
     public function testCastingParamNotInParams(): void
     {
         // Edge case: cast defined but param not present
-        $route = new Route(['GET'], '/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $route = new Route(['GET'], '/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher(
             [
@@ -164,7 +164,7 @@ class RouteDispatcherTest extends TestCase
     public function testDefaultCastType(): void
     {
         // Test unknown cast type falls through to default
-        $route = new Route(['GET'], '/test/{id}', fn($req, $id) => Response::success(['id' => $id]));
+        $route = new Route(['GET'], '/test/{id}', fn ($req, $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher(
             [
@@ -189,7 +189,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testCastFloatValid(): void
     {
-        $route = new Route(['GET'], '/test/{price:float}', fn($req, float $price) => Response::success(['price' => $price]));
+        $route = new Route(['GET'], '/test/{price:float}', fn ($req, float $price) => Response::success(['price' => $price]));
 
         $dispatcher = new RouteDispatcher(
             [
@@ -214,7 +214,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testCastFloatRejectsScientificNotation(): void
     {
-        $route = new Route(['GET'], '/test/{val:float}', fn($req, float $val) => Response::success(['val' => $val]));
+        $route = new Route(['GET'], '/test/{val:float}', fn ($req, float $val) => Response::success(['val' => $val]));
 
         // With debug=true, detailed error message is shown
         $dispatcher = new RouteDispatcher(
@@ -244,7 +244,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testTypeErrorHidesDetailsInProduction(): void
     {
-        $route = new Route(['GET'], '/test/{val:float}', fn($req, float $val) => Response::success(['val' => $val]));
+        $route = new Route(['GET'], '/test/{val:float}', fn ($req, float $val) => Response::success(['val' => $val]));
 
         // With debug=false (production), generic error message is shown
         $dispatcher = new RouteDispatcher(
@@ -275,7 +275,7 @@ class RouteDispatcherTest extends TestCase
 
     public function testHooksTriggered(): void
     {
-        $route = new Route(['GET'], '/test', fn($req) => Response::success([]));
+        $route = new Route(['GET'], '/test', fn ($req) => Response::success([]));
 
         $dispatcher = new RouteDispatcher(
             [['GET' => ['/test' => $route]], []],
@@ -297,7 +297,7 @@ class RouteDispatcherTest extends TestCase
     public function testTypeErrorCaught(): void
     {
         // Create a handler that causes TypeError during casting
-        $route = new Route(['GET'], '/test/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $route = new Route(['GET'], '/test/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher(
             [

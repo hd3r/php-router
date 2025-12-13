@@ -21,7 +21,7 @@ class SecurityTest extends TestCase
     public function testRejectsPathTraversalAttempts(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/files/{name}', fn($req, $name) => Response::success(['file' => $name]));
+        $collector->get('/files/{name}', fn ($req, $name) => Response::success(['file' => $name]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -46,7 +46,7 @@ class SecurityTest extends TestCase
     public function testPathParametersAreNotInterpreted(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/files/{path:any}', fn($req, $path) => Response::success(['path' => $path]));
+        $collector->get('/files/{path:any}', fn ($req, $path) => Response::success(['path' => $path]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -62,7 +62,7 @@ class SecurityTest extends TestCase
     public function testRejectsNullByteInjection(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/files/{name}', fn($req, $name) => Response::success(['name' => $name]));
+        $collector->get('/files/{name}', fn ($req, $name) => Response::success(['name' => $name]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -80,7 +80,7 @@ class SecurityTest extends TestCase
     public function testIntParameterRejectsNonIntegers(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/users/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -108,7 +108,7 @@ class SecurityTest extends TestCase
     public function testMethodIsCaseSensitive(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test', fn($req) => Response::success([]));
+        $collector->get('/test', fn ($req) => Response::success([]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -122,7 +122,7 @@ class SecurityTest extends TestCase
     public function testHandlesDoubleEncoding(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/test/{param}', fn($req, $param) => Response::success(['param' => $param]));
+        $collector->get('/test/{param}', fn ($req, $param) => Response::success(['param' => $param]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -160,7 +160,7 @@ class SecurityTest extends TestCase
     public function testHandlesLargeRouteParameters(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/search/{query}', fn($req, $query) => Response::success(['len' => strlen($query)]));
+        $collector->get('/search/{query}', fn ($req, $query) => Response::success(['len' => strlen($query)]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -178,7 +178,7 @@ class SecurityTest extends TestCase
     public function testHandlesUnicodeParameters(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users/{name}', fn($req, $name) => Response::success(['name' => $name]));
+        $collector->get('/users/{name}', fn ($req, $name) => Response::success(['name' => $name]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -206,7 +206,7 @@ class SecurityTest extends TestCase
     {
         $collector = new RouteCollector();
         // Potentially dangerous regex if not careful
-        $collector->get('/test/{slug:slug}', fn($req, $slug) => Response::success(['slug' => $slug]));
+        $collector->get('/test/{slug:slug}', fn ($req, $slug) => Response::success(['slug' => $slug]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -228,7 +228,7 @@ class SecurityTest extends TestCase
     public function testIntegerOverflowIsDetected(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users/{id:int}', fn($req, int $id) => Response::success(['id' => $id]));
+        $collector->get('/users/{id:int}', fn ($req, int $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 
@@ -245,7 +245,7 @@ class SecurityTest extends TestCase
     public function testParametersCannotInjectHeaders(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/search/{query}', fn($req, $query) => Response::success(['query' => $query]));
+        $collector->get('/search/{query}', fn ($req, $query) => Response::success(['query' => $query]));
 
         $dispatcher = new RouteDispatcher($collector->getData());
 

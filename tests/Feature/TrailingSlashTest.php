@@ -15,7 +15,7 @@ class TrailingSlashTest extends TestCase
     public function testStrictModeExactMatch(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users', fn($req) => Response::success(['route' => '/users']));
+        $collector->get('/users', fn ($req) => Response::success(['route' => '/users']));
 
         $dispatcher = new RouteDispatcher($collector->getData(), null, '', 'strict');
 
@@ -31,7 +31,7 @@ class TrailingSlashTest extends TestCase
     public function testIgnoreModeMatchesBoth(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users', fn($req) => Response::success(['route' => '/users']));
+        $collector->get('/users', fn ($req) => Response::success(['route' => '/users']));
 
         $dispatcher = new RouteDispatcher($collector->getData(), null, '', 'ignore');
 
@@ -47,7 +47,7 @@ class TrailingSlashTest extends TestCase
     public function testIgnoreModePreservesRootPath(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/', fn($req) => Response::success(['route' => '/']));
+        $collector->get('/', fn ($req) => Response::success(['route' => '/']));
 
         $dispatcher = new RouteDispatcher($collector->getData(), null, '', 'ignore');
 
@@ -59,7 +59,7 @@ class TrailingSlashTest extends TestCase
     public function testIgnoreModeWithDynamicRoutes(): void
     {
         $collector = new RouteCollector();
-        $collector->get('/users/{id}', fn($req, $id) => Response::success(['id' => $id]));
+        $collector->get('/users/{id}', fn ($req, $id) => Response::success(['id' => $id]));
 
         $dispatcher = new RouteDispatcher($collector->getData(), null, '', 'ignore');
 

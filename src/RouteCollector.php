@@ -48,7 +48,6 @@ class RouteCollector
      *
      * @param string $name Pattern name (e.g., 'date')
      * @param string $regex Regex pattern (e.g., '\d{4}-\d{2}-\d{2}')
-     * @return self
      */
     public function addPattern(string $name, string $regex): self
     {
@@ -60,7 +59,6 @@ class RouteCollector
      * Add multiple pattern shortcuts at once.
      *
      * @param array<string, string> $patterns Name => regex pairs
-     * @return self
      */
     public function addPatterns(array $patterns): self
     {
@@ -77,7 +75,6 @@ class RouteCollector
      * When false (ignore mode): /users/ is normalized to /users.
      *
      * @param bool $preserve Preserve trailing slashes
-     * @return self
      */
     public function setPreserveTrailingSlash(bool $preserve): self
     {
@@ -92,9 +89,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern (e.g., '/users/{id:int}')
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining ->name(), ->middleware()
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining ->name(), ->middleware()
      */
     public function get(string $pattern, mixed $handler): Route
     {
@@ -106,9 +104,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function post(string $pattern, mixed $handler): Route
     {
@@ -120,9 +119,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function put(string $pattern, mixed $handler): Route
     {
@@ -134,9 +134,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function patch(string $pattern, mixed $handler): Route
     {
@@ -148,9 +149,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function delete(string $pattern, mixed $handler): Route
     {
@@ -162,9 +164,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function options(string $pattern, mixed $handler): Route
     {
@@ -176,9 +179,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function head(string $pattern, mixed $handler): Route
     {
@@ -191,9 +195,10 @@ class RouteCollector
      * @param string[] $methods HTTP methods (e.g., ['GET', 'POST'])
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function match(array $methods, string $pattern, mixed $handler): Route
     {
@@ -205,9 +210,10 @@ class RouteCollector
      *
      * @param string $pattern URL pattern
      * @param mixed $handler Controller class, callable, or RequestHandler
-     * @return Route Fluent route for chaining
      *
      * @throws DuplicateRouteException If route already exists
+     *
+     * @return Route Fluent route for chaining
      */
     public function any(string $pattern, mixed $handler): Route
     {
@@ -260,7 +266,6 @@ class RouteCollector
      * @param string $from Source URL pattern
      * @param string $to Target URL
      * @param int $status HTTP status code (default: 302)
-     * @return Route
      *
      * @throws DuplicateRouteException If route already exists
      */
@@ -281,7 +286,6 @@ class RouteCollector
      * @param string[] $methods HTTP methods
      * @param string $pattern URL pattern
      * @param mixed $handler Route handler
-     * @return Route
      *
      * @throws DuplicateRouteException If route already exists for method+pattern
      */

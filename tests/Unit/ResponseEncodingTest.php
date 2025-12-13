@@ -29,7 +29,7 @@ class ResponseEncodingTest extends TestCase
         $this->assertSame($data['city'], $decoded['data']['city'], 'Umlauts damaged!');
         $this->assertSame($data['emoji'], $decoded['data']['emoji'], 'Emojis damaged!');
         $this->assertSame($data['symbols'], $decoded['data']['symbols'], 'Symbols damaged!');
-        
+
         // Verify JSON structure (no escaped unicode like \u00fc) because we use JSON_UNESCAPED_UNICODE
         $this->assertStringContainsString('Müller', $body, 'JSON should contain literal Müller');
         $this->assertStringContainsString('🚀', $body, 'JSON should contain literal Emoji');
@@ -39,7 +39,7 @@ class ResponseEncodingTest extends TestCase
     {
         // "Invalid" is a string with a bad byte sequence
         // \xC3 is start of 2-byte seq, but we end string there -> Invalid
-        $badString = "Hello \xC3 World"; 
+        $badString = "Hello \xC3 World";
 
         $response = Response::success(['text' => $badString]);
         $body = (string) $response->getBody();
@@ -47,13 +47,13 @@ class ResponseEncodingTest extends TestCase
 
         // It should NOT crash (which it did before)
         $this->assertSame(200, $response->getStatusCode());
-        
+
         // It SHOULD contain the Replacement Character  (U+FFFD)
-        // The exact output depends on PHP's implementation of substitution, 
+        // The exact output depends on PHP's implementation of substitution,
         // usually it replaces the bad byte.
         $this->assertStringContainsString('Hello', $decoded['data']['text']);
         $this->assertStringContainsString('World', $decoded['data']['text']);
-        
+
         // Verify it is valid JSON now
         $this->assertNotNull($decoded, 'Response body is not valid JSON');
     }
