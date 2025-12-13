@@ -27,7 +27,7 @@ class Router implements RequestHandlerInterface
 {
     use HasHooks;
 
-    /** @var array{debug: bool, basePath: string, baseUrl: ?string, trailingSlash: string, cacheFile: ?string, cacheSignature: ?string, routesFile: ?string} */
+    /** @var array{debug: bool, basePath: string, baseUrl: ?string, trailingSlash: string, cacheFile: ?string, cacheSignature: ?string, routesFile: ?string, urlEncoding: bool} */
     private array $config;
 
     private ?ContainerInterface $container = null;
@@ -41,7 +41,7 @@ class Router implements RequestHandlerInterface
     /**
      * Create a new Router instance.
      *
-     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string} $config
+     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string, urlEncoding?: bool} $config
      */
     public function __construct(array $config = [])
     {
@@ -56,6 +56,8 @@ class Router implements RequestHandlerInterface
             'cacheFile' => $config['cacheFile'] ?? self::env('ROUTER_CACHE_FILE'),
             'cacheSignature' => $config['cacheSignature'] ?? self::env('ROUTER_CACHE_KEY'),
             'routesFile' => $config['routesFile'] ?? null,
+            'urlEncoding' => $config['urlEncoding']
+                ?? filter_var(self::env('ROUTER_URL_ENCODING') ?? true, FILTER_VALIDATE_BOOL),
         ];
     }
 
@@ -86,7 +88,7 @@ class Router implements RequestHandlerInterface
     /**
      * Factory method for fluent creation.
      *
-     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string} $config
+     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string, urlEncoding?: bool} $config
      */
     public static function create(array $config = []): self
     {
@@ -96,7 +98,7 @@ class Router implements RequestHandlerInterface
     /**
      * Quick boot: create, load routes, and run.
      *
-     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string} $config
+     * @param array{debug?: bool, basePath?: string, baseUrl?: string, trailingSlash?: string, cacheFile?: string, cacheSignature?: string, routesFile?: string, urlEncoding?: bool} $config
      * @param string $routesFile Path to routes file
      */
     public static function boot(array $config, string $routesFile): void
@@ -362,6 +364,7 @@ class Router implements RequestHandlerInterface
             }
 
             $this->urlGenerator->setBasePath($this->config['basePath']);
+            $this->urlGenerator->setEncodeParams($this->config['urlEncoding']);
 
             if ($this->config['baseUrl']) {
                 $this->urlGenerator->setBaseUrl($this->config['baseUrl']);

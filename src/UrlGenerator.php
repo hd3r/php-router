@@ -17,6 +17,7 @@ final class UrlGenerator
 
     private string $basePath = '';
     private ?string $baseUrl = null;
+    private bool $encodeParams = true;
 
     /**
      * Create a new UrlGenerator instance.
@@ -56,6 +57,19 @@ final class UrlGenerator
     public function setBaseUrl(?string $baseUrl): void
     {
         $this->baseUrl = $baseUrl !== null ? rtrim($baseUrl, '/') : null;
+    }
+
+    /**
+     * Enable or disable URL encoding for route parameters.
+     *
+     * When enabled (default), parameters are encoded using rawurlencode().
+     * Example: 'John Doe' becomes 'John%20Doe'
+     *
+     * @param bool $encode Enable URL encoding
+     */
+    public function setEncodeParams(bool $encode): void
+    {
+        $this->encodeParams = $encode;
     }
 
     /**
@@ -158,7 +172,9 @@ final class UrlGenerator
                     );
                 }
 
-                return (string) $params[$name];
+                $value = (string) $params[$name];
+
+                return $this->encodeParams ? rawurlencode($value) : $value;
             },
             $pattern
         );
