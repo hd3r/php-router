@@ -45,18 +45,42 @@ class Router implements RequestHandlerInterface
      */
     public function __construct(array $config = [])
     {
-        // Config precedence: $config > $_ENV > default (consistent with pdo-wrapper)
+        // Config precedence: $config > $_ENV > getenv() > default (consistent with pdo-wrapper)
         $this->config = [
             'debug' => $config['debug']
-                ?? filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOL)
-                ?: in_array($_ENV['APP_ENV'] ?? '', ['local', 'dev', 'development'], true),
-            'basePath' => (string) ($config['basePath'] ?? $_ENV['ROUTER_BASE_PATH'] ?? ''),
-            'baseUrl' => isset($config['baseUrl']) ? (string) $config['baseUrl'] : (isset($_ENV['APP_URL']) ? (string) $_ENV['APP_URL'] : null),
-            'trailingSlash' => (string) ($config['trailingSlash'] ?? $_ENV['ROUTER_TRAILING_SLASH'] ?? 'strict'),
-            'cacheFile' => isset($config['cacheFile']) ? (string) $config['cacheFile'] : (isset($_ENV['ROUTER_CACHE_FILE']) ? (string) $_ENV['ROUTER_CACHE_FILE'] : null),
-            'cacheSignature' => isset($config['cacheSignature']) ? (string) $config['cacheSignature'] : (isset($_ENV['ROUTER_CACHE_KEY']) ? (string) $_ENV['ROUTER_CACHE_KEY'] : null),
+                ?? filter_var(self::env('APP_DEBUG') ?? false, FILTER_VALIDATE_BOOL)
+                ?: in_array(self::env('APP_ENV') ?? '', ['local', 'dev', 'development'], true),
+            'basePath' => (string) ($config['basePath'] ?? self::env('ROUTER_BASE_PATH') ?? ''),
+            'baseUrl' => $config['baseUrl'] ?? self::env('APP_URL'),
+            'trailingSlash' => (string) ($config['trailingSlash'] ?? self::env('ROUTER_TRAILING_SLASH') ?? 'strict'),
+            'cacheFile' => $config['cacheFile'] ?? self::env('ROUTER_CACHE_FILE'),
+            'cacheSignature' => $config['cacheSignature'] ?? self::env('ROUTER_CACHE_KEY'),
             'routesFile' => $config['routesFile'] ?? null,
         ];
+    }
+
+    /**
+     * Get environment variable value.
+     *
+     * Priority: $_ENV > getenv()
+     * This ensures thread-safety when using $_ENV while maintaining
+     * compatibility with legacy code that uses putenv/getenv.
+     *
+     * @param string $key Environment variable name
+     *
+     * @return string|null Value or null if not set
+     */
+    private static function env(string $key): ?string
+    {
+        // $_ENV is thread-safe, preferred
+        if (isset($_ENV[$key])) {
+            return (string) $_ENV[$key];
+        }
+
+        // getenv() fallback for legacy compatibility
+        $value = getenv($key);
+
+        return $value !== false ? $value : null;
     }
 
     /**

@@ -281,11 +281,14 @@ final class Response
         string $filename,
         string $contentType = 'application/octet-stream',
     ): ResponseInterface {
+        // Escape quotes and backslashes in filename for Content-Disposition header
+        $escapedFilename = str_replace(['\\', '"'], ['\\\\', '\\"'], $filename);
+
         return new Psr7Response(
             200,
             [
                 'Content-Type' => $contentType,
-                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $escapedFilename),
                 'Content-Length' => (string) strlen($content),
             ],
             $content,

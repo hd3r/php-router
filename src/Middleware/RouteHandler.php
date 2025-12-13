@@ -56,7 +56,7 @@ class RouteHandler implements RequestHandlerInterface
             /** @var class-string $class */
             $instance = ($this->container?->has($class))
                 ? $this->container->get($class)
-                : new $class();
+                : $this->instantiateController($class);
 
             // PHP 8 Named Arguments: ['id' => 5] becomes id: 5
             $response = $instance->{$method}($request, ...$arguments);
@@ -80,5 +80,36 @@ class RouteHandler implements RequestHandlerInterface
         }
 
         return $response;
+    }
+
+    /**
+     * Instantiate a controller class without container.
+     *
+     * Uses Reflection to check if constructor has required parameters.
+     * Optional parameters are allowed (controller will use defaults).
+     *
+     * @param class-string $class Controller class name
+     *
+     * @throws RouterException If controller requires constructor parameters
+     *
+     * @return object Controller instance
+     */
+    private function instantiateController(string $class): object
+    {
+        $reflection = new \ReflectionClass($class);
+        $constructor = $reflection->getConstructor();
+
+        // No constructor or constructor with no required parameters -> OK
+        if ($constructor === null || $constructor->getNumberOfRequiredParameters() === 0) {
+            return new $class();
+        }
+
+        // Constructor has required parameters -> needs DI container
+        throw new RouterException(
+            sprintf(
+                'Controller "%s" requires constructor parameters. Register it in a PSR-11 container or use setContainer().',
+                $class
+            )
+        );
     }
 }

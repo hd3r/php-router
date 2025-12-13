@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hd3r\Router;
 
 use Hd3r\Router\Exception\RouteNotFoundException;
+use Hd3r\Router\Exception\RouterException;
 
 /**
  * Generates URLs from named routes.
@@ -82,14 +83,14 @@ final class UrlGenerator
      * @param array<string, string|int> $params Route parameters
      *
      * @throws RouteNotFoundException If route name does not exist
-     * @throws \RuntimeException If baseUrl is not configured
+     * @throws RouterException If baseUrl is not configured
      *
      * @return string Generated absolute URL
      */
     public function absoluteUrl(string $name, array $params = []): string
     {
         if ($this->baseUrl === null) {
-            throw new \RuntimeException(
+            throw new RouterException(
                 'Cannot generate absolute URL: baseUrl is not configured. Set APP_URL environment variable or use setBaseUrl().'
             );
         }
@@ -152,7 +153,7 @@ final class UrlGenerator
                 $name = $matches[1];
 
                 if (!isset($params[$name])) {
-                    throw new \InvalidArgumentException(
+                    throw new RouterException(
                         sprintf('Missing parameter "%s" for URL generation', $name)
                     );
                 }

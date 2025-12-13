@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hd3r\Router\Tests\Unit;
 
 use Hd3r\Router\Exception\RouteNotFoundException;
+use Hd3r\Router\Exception\RouterException;
 use Hd3r\Router\Route;
 use Hd3r\Router\UrlGenerator;
 use PHPUnit\Framework\TestCase;
@@ -99,7 +100,7 @@ class UrlGeneratorTest extends TestCase
         ];
         $generator = new UrlGenerator($routes);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RouterException::class);
         $this->expectExceptionMessage('baseUrl is not configured');
         $generator->absoluteUrl('users.index');
     }
@@ -119,7 +120,7 @@ class UrlGeneratorTest extends TestCase
         ];
         $generator = new UrlGenerator($routes);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(RouterException::class);
         $this->expectExceptionMessage('Missing parameter "id"');
         $generator->url('users.show', []);
     }
@@ -190,7 +191,7 @@ class UrlGeneratorTest extends TestCase
         $generator->setBaseUrl('https://example.com');
         $generator->setBaseUrl(null);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RouterException::class);
         $generator->absoluteUrl('test');
     }
 

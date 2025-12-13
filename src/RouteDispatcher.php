@@ -64,11 +64,15 @@ class RouteDispatcher implements RequestHandlerInterface
 
         // BasePath handling: requests MUST start with basePath
         if ($this->basePath !== '') {
-            if (!str_starts_with($uri, $this->basePath)) {
+            $basePathLen = strlen($this->basePath);
+            // Must start with basePath AND either be exact match or followed by '/'
+            // This prevents /api from matching /apiX
+            if (!str_starts_with($uri, $this->basePath) ||
+                (strlen($uri) > $basePathLen && $uri[$basePathLen] !== '/')) {
                 // Request doesn't have required basePath prefix -> 404
                 return $this->handleNotFound($method, $uri);
             }
-            $uri = substr($uri, strlen($this->basePath)) ?: '/';
+            $uri = substr($uri, $basePathLen) ?: '/';
         }
 
         // Trailing slash handling
