@@ -37,12 +37,14 @@ class RedirectHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Replace route parameters in target URL
+        // Replace ONLY route parameters (not all attributes) with URL encoding
         $target = $this->target;
-        foreach ($request->getAttributes() as $key => $value) {
-            if (is_scalar($value)) {
-                $target = str_replace('{' . $key . '}', (string) $value, $target);
-            }
+        /** @var array<string, scalar> $params */
+        $params = $request->getAttribute('_route_params', []);
+
+        foreach ($params as $key => $value) {
+            // Always encode parameter values to prevent injection attacks
+            $target = str_replace('{' . $key . '}', rawurlencode((string) $value), $target);
         }
 
         return Response::redirect($target, $this->status);

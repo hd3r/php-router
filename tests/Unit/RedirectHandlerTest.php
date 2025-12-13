@@ -33,8 +33,9 @@ class RedirectHandlerTest extends TestCase
     {
         $handler = new RedirectHandler('/profile/{id}');
 
+        // Parameters must be in _route_params (as set by RouteDispatcher)
         $request = (new ServerRequest('GET', '/users/42/profile'))
-            ->withAttribute('id', 42);
+            ->withAttribute('_route_params', ['id' => 42]);
 
         $response = $handler->handle($request);
 
@@ -46,26 +47,39 @@ class RedirectHandlerTest extends TestCase
         $handler = new RedirectHandler('/posts/{year}/{slug}');
 
         $request = (new ServerRequest('GET', '/old'))
-            ->withAttribute('year', 2025)
-            ->withAttribute('slug', 'hello');
+            ->withAttribute('_route_params', ['year' => 2025, 'slug' => 'hello']);
 
         $response = $handler->handle($request);
 
         $this->assertSame('/posts/2025/hello', $response->getHeaderLine('Location'));
     }
 
-    public function testRedirectIgnoresNonScalarAttributes(): void
+    public function testRedirectIgnoresNonRouteAttributes(): void
     {
         $handler = new RedirectHandler('/test/{id}');
 
+        // Only _route_params are replaced, not other attributes
         $request = (new ServerRequest('GET', '/old'))
-            ->withAttribute('id', 42)
-            ->withAttribute('object', new \stdClass());
+            ->withAttribute('_route_params', ['id' => 42])
+            ->withAttribute('user_injected', 'should-be-ignored');
 
         $response = $handler->handle($request);
 
-        // Should only replace scalar values
         $this->assertSame('/test/42', $response->getHeaderLine('Location'));
+    }
+
+    public function testRedirectEncodesParameters(): void
+    {
+        $handler = new RedirectHandler('/search/{query}');
+
+        // Special characters should be URL-encoded
+        $request = (new ServerRequest('GET', '/old'))
+            ->withAttribute('_route_params', ['query' => 'hello world&foo=bar']);
+
+        $response = $handler->handle($request);
+
+        // rawurlencode: space → %20, & → %26, = → %3D
+        $this->assertSame('/search/hello%20world%26foo%3Dbar', $response->getHeaderLine('Location'));
     }
 
     public function testGetTarget(): void
