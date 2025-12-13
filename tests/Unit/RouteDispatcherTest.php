@@ -236,8 +236,8 @@ class RouteDispatcherTest extends TestCase
 
         $response = $dispatcher->handle(new ServerRequest('GET', '/test/1e3'));
 
-        // TypeError is caught and converted to 500 response with debug info
-        $this->assertSame(500, $response->getStatusCode());
+        // TypeError is caught and converted to 400 response with debug info
+        $this->assertSame(400, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true);
         $this->assertStringContainsString('expected decimal', $body['message']);
     }
@@ -266,11 +266,11 @@ class RouteDispatcherTest extends TestCase
 
         $response = $dispatcher->handle(new ServerRequest('GET', '/test/1e3'));
 
-        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame(400, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true);
         // Should NOT contain internal details
         $this->assertStringNotContainsString('expected decimal', $body['message']);
-        $this->assertSame('Internal Server Error', $body['message']);
+        $this->assertSame('Bad Request', $body['message']);
     }
 
     public function testHooksTriggered(): void
@@ -315,7 +315,7 @@ class RouteDispatcherTest extends TestCase
 
         // "abc" will cause TypeError when casting to int
         $response = $dispatcher->handle(new ServerRequest('GET', '/test/abc'));
-        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame(400, $response->getStatusCode());
     }
 }
 

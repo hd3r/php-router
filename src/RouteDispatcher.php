@@ -91,15 +91,15 @@ class RouteDispatcher implements RequestHandlerInterface
                 default => Response::serverError('Unknown dispatcher result'),
             };
         } catch (\TypeError $e) {
-            // Casting errors (invalid int, float, bool) -> 500
+            // Casting errors (invalid int, float, bool) -> 400 Bad Request
+            // This is a client error (invalid parameter), not a server error
             $this->trigger('error', [
                 'method' => $method,
                 'path' => $uri,
                 'exception' => $e,
             ]);
-            // Only show detailed error message in debug mode
-            $message = $this->debug ? $e->getMessage() : 'Internal Server Error';
-            return Response::serverError($message);
+            $message = $this->debug ? $e->getMessage() : 'Bad Request';
+            return Response::error($message, 400, 'INVALID_PARAMETER');
         }
     }
 

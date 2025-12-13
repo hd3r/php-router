@@ -236,8 +236,8 @@ class SecurityTest extends TestCase
         $overflow = '99999999999999999999999999999';
         $response = $dispatcher->handle(new ServerRequest('GET', "/users/{$overflow}"));
 
-        // Should fail with 500 (overflow detected)
-        $this->assertSame(500, $response->getStatusCode());
+        // Should fail with 400 (overflow detected = client error)
+        $this->assertSame(400, $response->getStatusCode());
     }
 
     // ==================== CRLF Injection in Parameters ====================

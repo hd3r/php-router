@@ -40,7 +40,7 @@ class CastingTest extends TestCase
         $dispatcher = new RouteDispatcher($collector->getData());
 
         $response = $dispatcher->handle(new ServerRequest('GET', '/test/01'));
-        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame(400, $response->getStatusCode());
     }
 
     public function testIntCastingRejectsScientificNotation(): void
@@ -89,7 +89,7 @@ class CastingTest extends TestCase
         // Value larger than PHP_INT_MAX
         $hugeNumber = '99999999999999999999999999999999';
         $response = $dispatcher->handle(new ServerRequest('GET', "/test/{$hugeNumber}"));
-        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame(400, $response->getStatusCode());
     }
 
     // ==================== FLOAT CASTING ====================
