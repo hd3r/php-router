@@ -436,4 +436,53 @@ class RouterTest extends TestCase
         $response2 = $router->handle(new ServerRequest('GET', '/api'));
         $this->assertSame(200, $response2->getStatusCode());
     }
+
+    public function testCacheExceptionTriggersErrorHookAndRebuilds(): void
+    {
+        $cacheFile = sys_get_temp_dir() . '/router_cache_corrupt_' . uniqid() . '.php';
+
+        $this->createRoutesFile(
+            <<<'PHP'
+                <?php
+                use Hd3r\Router\RouteCollector;
+                use Hd3r\Router\Response;
+
+                return function (RouteCollector $r) {
+                    $r->get('/test', ['TestController', 'index']);
+                };
+                PHP
+        );
+
+        // Create a cache file with invalid HMAC signature
+        $corruptCache = "<?php\n// HMAC-SHA256: 0000000000000000000000000000000000000000000000000000000000000000\nreturn ['dispatchData' => [[], []], 'namedRoutes' => []];";
+        file_put_contents($cacheFile, $corruptCache);
+
+        $cacheErrorTriggered = false;
+        $cacheErrorData = null;
+
+        $router = Router::create(['debug' => false])
+            ->enableCache($cacheFile, 'real-signature-key')
+            ->loadRoutes($this->routesFile)
+            ->on('error', function ($data) use (&$cacheErrorTriggered, &$cacheErrorData) {
+                // Only capture the first cache error, ignore subsequent errors
+                if (isset($data['type']) && $data['type'] === 'cache' && !$cacheErrorTriggered) {
+                    $cacheErrorTriggered = true;
+                    $cacheErrorData = $data;
+                }
+            });
+
+        // Should not throw, but trigger error hook and rebuild routes
+        $response = $router->handle(new ServerRequest('GET', '/test'));
+
+        // Error hook should have been triggered with cache type
+        $this->assertTrue($cacheErrorTriggered);
+        $this->assertSame('cache', $cacheErrorData['type']);
+        $this->assertInstanceOf(\Hd3r\Router\Exception\CacheException::class, $cacheErrorData['exception']);
+
+        // Route should still work (rebuilt from routes file)
+        // Note: Returns 500 because TestController doesn't exist, but route was matched
+        $this->assertSame(500, $response->getStatusCode());
+
+        unlink($cacheFile);
+    }
 }

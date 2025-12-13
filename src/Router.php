@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hd3r\Router;
 
 use Hd3r\Router\Cache\RouteCache;
+use Hd3r\Router\Exception\CacheException;
 use Hd3r\Router\Exception\RouterException;
 use Hd3r\Router\Traits\HasHooks;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -247,7 +248,17 @@ class Router implements RequestHandlerInterface
             );
 
             if (!$this->config['debug']) {
-                $data = $cache->load();
+                try {
+                    $data = $cache->load();
+                } catch (CacheException $e) {
+                    // Cache corrupted (e.g., HMAC mismatch) - trigger error hook and rebuild
+                    $this->trigger('error', [
+                        'type' => 'cache',
+                        'message' => $e->getMessage(),
+                        'exception' => $e,
+                    ]);
+                    $data = null;
+                }
             }
         }
 
