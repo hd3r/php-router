@@ -337,9 +337,15 @@ final class Response
      */
     private static function json(int $status, array $data): ResponseInterface
     {
+        // RFC 7807: application/problem+json is only for error responses (4xx/5xx).
+        // Success responses (2xx/3xx) use getSuccessContentType() (allows custom formats like JSON:API).
+        $contentType = ($status >= 400)
+            ? self::getResponder()->getContentType()
+            : self::getResponder()->getSuccessContentType();
+
         return new Psr7Response(
             $status,
-            ['Content-Type' => self::getResponder()->getContentType()],
+            ['Content-Type' => $contentType],
             json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
         );
     }

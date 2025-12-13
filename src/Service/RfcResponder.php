@@ -102,6 +102,14 @@ final class RfcResponder implements ResponderInterface
     }
 
     /**
+     * RFC 7807: Success responses use standard JSON, not problem+json.
+     */
+    public function getSuccessContentType(): string
+    {
+        return 'application/json';
+    }
+
+    /**
      * Build the type URI from an error code.
      *
      * @param string|null $code Error code (e.g., 'NOT_FOUND', 'VALIDATION_ERROR')

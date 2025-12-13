@@ -338,6 +338,22 @@ class ResponseTest extends TestCase
         $this->assertSame('application/json', $response2->getHeaderLine('Content-Type'));
     }
 
+    public function testRfcResponderUsesCorrectContentTypes(): void
+    {
+        Response::setResponder(new RfcResponder());
+
+        // RFC 7807: Success responses use application/json (not problem+json)
+        $success = Response::success(['data' => 'test']);
+        $this->assertSame('application/json', $success->getHeaderLine('Content-Type'));
+
+        // RFC 7807: Error responses use application/problem+json
+        $error = Response::notFound();
+        $this->assertSame('application/problem+json', $error->getHeaderLine('Content-Type'));
+
+        $serverError = Response::serverError();
+        $this->assertSame('application/problem+json', $serverError->getHeaderLine('Content-Type'));
+    }
+
     public function testCustomResponder(): void
     {
         $customResponder = new class () implements ResponderInterface {
@@ -352,6 +368,11 @@ class ResponseTest extends TestCase
             }
 
             public function getContentType(): string
+            {
+                return 'application/vnd.custom+json';
+            }
+
+            public function getSuccessContentType(): string
             {
                 return 'application/vnd.custom+json';
             }

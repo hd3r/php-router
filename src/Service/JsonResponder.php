@@ -57,4 +57,9 @@ final class JsonResponder implements ResponderInterface
     {
         return 'application/json';
     }
+
+    public function getSuccessContentType(): string
+    {
+        return 'application/json';
+    }
 }

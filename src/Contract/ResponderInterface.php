@@ -36,9 +36,19 @@ interface ResponderInterface
     public function formatError(string $message, ?string $code = null, ?array $details = null): array;
 
     /**
-     * Get the Content-Type header value.
+     * Get the Content-Type header value for error responses (4xx/5xx).
      *
      * @return string MIME type (e.g., 'application/json', 'application/problem+json')
      */
     public function getContentType(): string;
+
+    /**
+     * Get the Content-Type header value for success responses (2xx/3xx).
+     *
+     * RFC 7807: 'application/problem+json' is only for errors.
+     * Override this if your format requires a different success Content-Type.
+     *
+     * @return string MIME type (default: 'application/json')
+     */
+    public function getSuccessContentType(): string;
 }

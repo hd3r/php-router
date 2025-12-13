@@ -12,8 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release.
 - **Routing** with support for GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD methods.
-  - Dynamic route parameters with regex constraints.
-  - Optional parameters.
+  - Dynamic route parameters with type constraints and auto-casting.
   - Route groups with prefix/middleware support.
   - Named routes for URL generation.
 - **PSR-15 Middleware** support.
