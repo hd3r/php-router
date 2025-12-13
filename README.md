@@ -495,7 +495,12 @@ class XmlResponder implements ResponderInterface
 
     public function getContentType(): string
     {
-        return 'application/xml';
+        return 'application/xml';  // Used for 4xx/5xx responses
+    }
+
+    public function getSuccessContentType(): string
+    {
+        return 'application/xml';  // Used for 2xx responses
     }
 }
 ```

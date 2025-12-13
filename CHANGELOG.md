@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2024-12-13
+## [1.1.0] - 2025-12-13
+
+### Added
+- `ResponderInterface::getSuccessContentType()` for RFC 7807 compliance.
+  - Success responses (2xx) use `application/json`.
+  - Error responses (4xx/5xx) use responder's content type (e.g., `application/problem+json`).
+
+### Fixed
+- **Security:** `RedirectHandler` now only replaces `_route_params` with `rawurlencode()`.
+  - Prevents injection of middleware-added attributes into redirect URLs.
+  - Properly encodes special characters in redirect parameters.
+- **Robustness:** Cache save with Closures now triggers error hook instead of throwing.
+  - Routes with Closures work at runtime, caching is silently skipped.
+  - Error hook receives `type: 'cache'` for logging.
+- **DX:** `UrlGenerator` throws `RouterException` on unsupported `[]` syntax (hard throw, not via hook).
+  - Prevents silent misbehavior when optional segments are used.
+  - Clear error message: "Define separate routes instead."
+
+### Changed
+- `ResponderInterface` now requires `getSuccessContentType()` method.
+  - **Breaking:** Custom responders must implement this method.
+
+## [1.0.0] - 2025-12-07
 
 ### Added
 - Initial release.
@@ -33,5 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `DuplicateRouteException`
   - `CacheException`
 
-[Unreleased]: https://github.com/hd3r/php-router/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/hd3r/php-router/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/hd3r/php-router/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hd3r/php-router/releases/tag/v1.0.0
