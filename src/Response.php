@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Hd3r\Router;
 
+use Hd3r\Router\Contract\ResponderInterface;
+use Hd3r\Router\Service\JsonResponder;
 use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Factory for standardized API responses.
+ * Facade for standardized API responses.
+ *
+ * Delegates body formatting to a ResponderInterface implementation.
+ * Default: JsonResponder with {success, data, error} format.
  *
  * JSON Structure:
  * Success: {"success": true, "data": {...}, "message": "...", "meta": {...}}
@@ -16,6 +21,34 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class Response
 {
+    private static ?ResponderInterface $responder = null;
+
+    /**
+     * Set a custom responder for response formatting.
+     */
+    public static function setResponder(ResponderInterface $responder): void
+    {
+        self::$responder = $responder;
+    }
+
+    /**
+     * Get the current responder (lazy-loads JsonResponder as default).
+     */
+    public static function getResponder(): ResponderInterface
+    {
+        return self::$responder ??= new JsonResponder();
+    }
+
+    /**
+     * Reset to default responder.
+     *
+     * Call in test tearDown() for isolation.
+     */
+    public static function reset(): void
+    {
+        self::$responder = null;
+    }
+
     // ==================== Success Responses ====================
 
     /**
@@ -30,7 +63,7 @@ final class Response
         ?string $message = null,
         ?array $meta = null,
     ): ResponseInterface {
-        return self::json(200, self::successBody($data, $message, $meta));
+        return self::json(200, self::getResponder()->formatSuccess($data, $message, $meta));
     }
 
     /**
@@ -45,7 +78,7 @@ final class Response
         ?string $message = null,
         ?string $location = null,
     ): ResponseInterface {
-        $response = self::json(201, self::successBody($data, $message));
+        $response = self::json(201, self::getResponder()->formatSuccess($data, $message));
 
         if ($location !== null) {
             $response = $response->withHeader('Location', $location);
@@ -62,7 +95,7 @@ final class Response
      */
     public static function accepted(mixed $data, ?string $message = null): ResponseInterface
     {
-        return self::json(202, self::successBody($data, $message));
+        return self::json(202, self::getResponder()->formatSuccess($data, $message));
     }
 
     /**
@@ -89,7 +122,7 @@ final class Response
     ): ResponseInterface {
         $lastPage = (int) ceil($total / $perPage);
 
-        return self::json(200, self::successBody($items, null, [
+        return self::json(200, self::getResponder()->formatSuccess($items, null, [
             'pagination' => [
                 'total' => $total,
                 'per_page' => $perPage,
@@ -117,7 +150,7 @@ final class Response
         ?string $code = null,
         ?array $details = null,
     ): ResponseInterface {
-        return self::json($status, self::errorBody($message, $message, $code, $details));
+        return self::json($status, self::getResponder()->formatError($message, $code, $details));
     }
 
     /**
@@ -138,7 +171,7 @@ final class Response
             $message = 'Resource not found';
         }
 
-        return self::json(404, self::errorBody($message, $message, 'NOT_FOUND'));
+        return self::json(404, self::getResponder()->formatError($message, 'NOT_FOUND'));
     }
 
     /**
@@ -149,7 +182,7 @@ final class Response
     public static function unauthorized(?string $message = null): ResponseInterface
     {
         $message ??= 'Unauthorized';
-        return self::json(401, self::errorBody($message, $message, 'UNAUTHORIZED'));
+        return self::json(401, self::getResponder()->formatError($message, 'UNAUTHORIZED'));
     }
 
     /**
@@ -160,7 +193,7 @@ final class Response
     public static function forbidden(?string $message = null): ResponseInterface
     {
         $message ??= 'Forbidden';
-        return self::json(403, self::errorBody($message, $message, 'FORBIDDEN'));
+        return self::json(403, self::getResponder()->formatError($message, 'FORBIDDEN'));
     }
 
     /**
@@ -170,9 +203,8 @@ final class Response
      */
     public static function validationError(array $errors): ResponseInterface
     {
-        return self::json(422, self::errorBody(
+        return self::json(422, self::getResponder()->formatError(
             'Validation failed',
-            'The given data was invalid',
             'VALIDATION_ERROR',
             ['fields' => $errors],
         ));
@@ -185,10 +217,10 @@ final class Response
      */
     public static function methodNotAllowed(array $allowedMethods): ResponseInterface
     {
-        $response = self::json(405, self::errorBody(
+        $response = self::json(405, self::getResponder()->formatError(
             'Method not allowed',
-            sprintf('Allowed methods: %s', implode(', ', $allowedMethods)),
             'METHOD_NOT_ALLOWED',
+            ['allowed' => $allowedMethods],
         ));
 
         return $response->withHeader('Allow', implode(', ', $allowedMethods));
@@ -201,10 +233,10 @@ final class Response
      */
     public static function tooManyRequests(int $retryAfter): ResponseInterface
     {
-        $response = self::json(429, self::errorBody(
+        $response = self::json(429, self::getResponder()->formatError(
             'Too many requests',
-            sprintf('Retry after %d seconds', $retryAfter),
             'TOO_MANY_REQUESTS',
+            ['retry_after' => $retryAfter],
         ));
 
         return $response->withHeader('Retry-After', (string) $retryAfter);
@@ -223,7 +255,7 @@ final class Response
         $userMessage = $message ?? 'Internal server error';
         $details = $debug !== null ? ['debug' => $debug] : null;
 
-        return self::json(500, self::errorBody($userMessage, $userMessage, 'SERVER_ERROR', $details));
+        return self::json(500, self::getResponder()->formatError($userMessage, 'SERVER_ERROR', $details));
     }
 
     // ==================== Other Responses ====================
@@ -307,70 +339,9 @@ final class Response
     {
         return new Psr7Response(
             $status,
-            ['Content-Type' => 'application/json'],
+            ['Content-Type' => self::getResponder()->getContentType()],
             json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
         );
     }
 
-    /**
-     * Build success response body.
-     *
-     * @param mixed $data Response data
-     * @param string|null $message Success message
-     * @param array<string, mixed>|null $meta Metadata
-     *
-     * @return array<string, mixed>
-     */
-    private static function successBody(mixed $data, ?string $message, ?array $meta = null): array
-    {
-        $body = [
-            'success' => true,
-            'data' => $data,
-        ];
-
-        if ($message !== null) {
-            $body['message'] = $message;
-        }
-
-        if ($meta !== null) {
-            $body['meta'] = $meta;
-        }
-
-        return $body;
-    }
-
-    /**
-     * Build error response body.
-     *
-     * @param string $userMessage User-facing error message
-     * @param string $technicalMessage Technical error message
-     * @param string|null $code Error code
-     * @param array<string, mixed>|null $details Additional error details
-     *
-     * @return array<string, mixed>
-     */
-    private static function errorBody(
-        string $userMessage,
-        string $technicalMessage,
-        ?string $code = null,
-        ?array $details = null,
-    ): array {
-        $error = [
-            'message' => $technicalMessage,
-        ];
-
-        if ($code !== null) {
-            $error['code'] = $code;
-        }
-
-        if ($details !== null) {
-            $error['details'] = $details;
-        }
-
-        return [
-            'success' => false,
-            'message' => $userMessage,
-            'error' => $error,
-        ];
-    }
 }
