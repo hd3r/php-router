@@ -83,13 +83,26 @@ class RouteDispatcher implements RequestHandlerInterface
         $startTime = microtime(true);
         $match = $this->dispatcher->dispatch($method, $uri);
 
+        // Handle non-FOUND cases directly (no casting involved)
+        if ($match[0] === Dispatcher::NOT_FOUND) {
+            return $this->handleNotFound($method, $uri);
+        }
+
+        if ($match[0] === Dispatcher::METHOD_NOT_ALLOWED) {
+            return $this->handleMethodNotAllowed($method, $uri, $this->ensureStringArray($match[1]));
+        }
+
+        if ($match[0] !== Dispatcher::FOUND) {
+            // @codeCoverageIgnoreStart
+            // Defense-in-depth: Dispatcher only returns FOUND, NOT_FOUND, or METHOD_NOT_ALLOWED
+            return Response::serverError('Unknown dispatcher result');
+            // @codeCoverageIgnoreEnd
+        }
+
+        // FOUND: Cast parameters first (wrapped in try-catch)
+        // This ONLY catches casting errors, not controller TypeErrors!
         try {
-            return match ($match[0]) {
-                Dispatcher::NOT_FOUND => $this->handleNotFound($method, $uri),
-                Dispatcher::METHOD_NOT_ALLOWED => $this->handleMethodNotAllowed($method, $uri, $this->ensureStringArray($match[1])),
-                Dispatcher::FOUND => $this->handleFound($this->ensureRoute($match[1]), $match[2], $match[3], $request, $method, $uri, $startTime),
-                default => Response::serverError('Unknown dispatcher result'),
-            };
+            $castedParams = $this->castParams($match[2], $match[3]);
         } catch (\TypeError $e) {
             // Casting errors (invalid int, float, bool) -> 400 Bad Request
             // This is a client error (invalid parameter), not a server error
@@ -101,14 +114,16 @@ class RouteDispatcher implements RequestHandlerInterface
             $message = $this->debug ? $e->getMessage() : 'Bad Request';
             return Response::error($message, 400, 'INVALID_PARAMETER');
         }
+
+        // Controller execution is NOT wrapped - TypeErrors here are real 500s
+        return $this->handleFound($this->ensureRoute($match[1]), $castedParams, $request, $method, $uri, $startTime);
     }
 
     /**
      * Handle a matched route.
      *
      * @param Route $route Matched route
-     * @param array<string, string> $params Route parameters
-     * @param array<string, string> $casts Parameter type casts
+     * @param array<string, string|int|float|bool> $params Already-casted route parameters
      * @param ServerRequestInterface $request PSR-7 request
      * @param string $method HTTP method
      * @param string $uri Request URI
@@ -119,38 +134,19 @@ class RouteDispatcher implements RequestHandlerInterface
     private function handleFound(
         Route $route,
         array $params,
-        array $casts,
         ServerRequestInterface $request,
         string $method,
         string $uri,
         float $startTime
     ): ResponseInterface {
-        // 1. Validated Type Casting (spec-compliant)
-        /** @var array<string, string|int|float|bool> $castedParams */
-        $castedParams = $params;
-        foreach ($casts as $key => $type) {
-            if (!isset($castedParams[$key])) {
-                continue;
-            }
-
-            /** @var string $value */
-            $value = $castedParams[$key];
-            $castedParams[$key] = match ($type) {
-                'int' => $this->castInt($value, $key),
-                'float' => $this->castFloat($value, $key),
-                'bool' => $this->castBool($value, $key),
-                default => $value,
-            };
-        }
-
-        // 2. Inject parameters into Request (BEFORE Middleware!)
+        // 1. Inject parameters into Request (BEFORE Middleware!)
         // Store route params separately for handler invocation
-        $request = $request->withAttribute('_route_params', $castedParams);
-        foreach ($castedParams as $key => $value) {
+        $request = $request->withAttribute('_route_params', $params);
+        foreach ($params as $key => $value) {
             $request = $request->withAttribute($key, $value);
         }
 
-        // 3. Build Middleware Chain
+        // 2. Build Middleware Chain
         $handler = new RouteHandler($route->handler, $this->container);
         foreach (array_reverse($route->middleware) as $middleware) {
             $handler = new MiddlewareHandler($this->resolveMiddleware($middleware), $handler);
@@ -158,17 +154,50 @@ class RouteDispatcher implements RequestHandlerInterface
 
         $response = $handler->handle($request);
 
-        // 4. Trigger hook AFTER successful dispatch
+        // 3. Trigger hook AFTER successful dispatch
         $this->trigger('dispatch', [
             'method' => $method,
             'path' => $uri,
             'route' => $route->pattern,
             'handler' => $route->handler,
-            'params' => $castedParams,
+            'params' => $params,
             'duration' => microtime(true) - $startTime,
         ]);
 
         return $response;
+    }
+
+    /**
+     * Cast route parameters according to type hints.
+     *
+     * @param array<string, string> $params Raw string parameters
+     * @param array<string, string> $casts Parameter type casts (e.g., ['id' => 'int'])
+     *
+     * @throws \TypeError If casting fails (invalid format, overflow, etc.)
+     *
+     * @return array<string, string|int|float|bool> Casted parameters
+     */
+    private function castParams(array $params, array $casts): array
+    {
+        /** @var array<string, string|int|float|bool> $result */
+        $result = $params;
+
+        foreach ($casts as $key => $type) {
+            if (!isset($result[$key])) {
+                continue;
+            }
+
+            /** @var string $value */
+            $value = $result[$key];
+            $result[$key] = match ($type) {
+                'int' => $this->castInt($value, $key),
+                'float' => $this->castFloat($value, $key),
+                'bool' => $this->castBool($value, $key),
+                default => $value,
+            };
+        }
+
+        return $result;
     }
 
     /**

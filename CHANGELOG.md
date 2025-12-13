@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Invalid parameter types (e.g., `"abc"` for `:int`) now return `400 Bad Request` instead of `500 Internal Server Error`.
   - TypeError during parameter casting is a client error, not a server error.
+  - Controller TypeErrors correctly bubble up as `500 Internal Server Error` (not masked as 400).
 
 ## [1.1.1] - 2025-12-13
 

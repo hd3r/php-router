@@ -317,6 +317,28 @@ class RouteDispatcherTest extends TestCase
         $response = $dispatcher->handle(new ServerRequest('GET', '/test/abc'));
         $this->assertSame(400, $response->getStatusCode());
     }
+
+    public function testControllerTypeErrorBubblesUp(): void
+    {
+        // This test verifies that TypeErrors in controllers are NOT caught
+        // by the casting error handler (they bubble up, not returned as 400)
+        $route = new Route(['GET'], '/test', [BuggyController::class, 'handle']);
+
+        $dispatcher = new RouteDispatcher(
+            [['GET' => ['/test' => $route]], []],
+            null,
+            '',
+            'strict',
+            true
+        );
+
+        // The controller will throw a TypeError internally - this should NOT
+        // be caught by the casting handler, it should bubble up
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('must be of type int');
+
+        $dispatcher->handle(new ServerRequest('GET', '/test'));
+    }
 }
 
 class TestMiddlewareClass implements MiddlewareInterface
@@ -324,5 +346,21 @@ class TestMiddlewareClass implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         return Response::success(['class_instantiated' => true]);
+    }
+}
+
+class BuggyController
+{
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        // Simulate a bug: passing wrong type to a typed function
+        $this->expectsInt('not an int'); // This throws TypeError
+
+        return Response::success([]);
+    }
+
+    private function expectsInt(int $value): void
+    {
+        // This will never be reached due to TypeError
     }
 }
