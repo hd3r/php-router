@@ -15,6 +15,8 @@ use PHPUnit\Framework\TestCase;
  */
 class RouteCacheVfsTest extends TestCase
 {
+    private const TEST_KEY = 'test-signature-key-for-unit-tests';
+
     private vfsStreamDirectory $root;
 
     protected function setUp(): void
@@ -27,7 +29,7 @@ class RouteCacheVfsTest extends TestCase
         // Create a read-only directory that cannot have subdirs created
         $dir = vfsStream::newDirectory('readonly', 0o444)->at($this->root);
 
-        $cache = new RouteCache(vfsStream::url('cache/readonly/subdir/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/readonly/subdir/routes.php'), self::TEST_KEY);
 
         $this->expectException(CacheException::class);
         // Could be either "not writable" or "write" depending on which check fails
@@ -40,7 +42,7 @@ class RouteCacheVfsTest extends TestCase
         $dir = vfsStream::newDirectory('writable', 0o755)->at($this->root);
 
         // Create the cache file
-        $cache = new RouteCache(vfsStream::url('cache/writable/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/writable/routes.php'), self::TEST_KEY);
         $cache->save(['initial' => true]);
 
         // Make directory read-only so temp file creation fails
@@ -54,7 +56,7 @@ class RouteCacheVfsTest extends TestCase
 
     public function testSaveCreatesNestedDirectory(): void
     {
-        $cache = new RouteCache(vfsStream::url('cache/deep/nested/path/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/deep/nested/path/routes.php'), self::TEST_KEY);
 
         $cache->save(['test' => true]);
 
@@ -71,7 +73,7 @@ class RouteCacheVfsTest extends TestCase
         // Make it unreadable
         $file->chmod(0o000);
 
-        $cache = new RouteCache(vfsStream::url('cache/unreadable.php'));
+        $cache = new RouteCache(vfsStream::url('cache/unreadable.php'), self::TEST_KEY);
 
         // is_readable() check prevents file_get_contents warning
         $result = $cache->load();
@@ -113,7 +115,7 @@ class RouteCacheVfsTest extends TestCase
             ->withContent("<?php\nreturn ['test'];")
             ->at($this->root);
 
-        $cache = new RouteCache(vfsStream::url('cache/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/routes.php'), self::TEST_KEY);
 
         $this->assertTrue($cache->clear());
         $this->assertFalse($this->root->hasChild('routes.php'));
@@ -125,7 +127,7 @@ class RouteCacheVfsTest extends TestCase
             ->withContent("<?php\nreturn ['test'];")
             ->at($this->root);
 
-        $cache = new RouteCache(vfsStream::url('cache/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/routes.php'), self::TEST_KEY);
 
         $this->assertTrue($cache->isFresh());
         $this->assertTrue($cache->isFresh(3600)); // Within 1 hour
@@ -133,7 +135,7 @@ class RouteCacheVfsTest extends TestCase
 
     public function testAtomicWriteWithVfs(): void
     {
-        $cache = new RouteCache(vfsStream::url('cache/atomic.php'));
+        $cache = new RouteCache(vfsStream::url('cache/atomic.php'), self::TEST_KEY);
 
         // Save multiple times to verify atomic write
         $cache->save(['version' => 1]);
@@ -149,7 +151,7 @@ class RouteCacheVfsTest extends TestCase
         // Pre-create the directory
         vfsStream::newDirectory('existing', 0o755)->at($this->root);
 
-        $cache = new RouteCache(vfsStream::url('cache/existing/routes.php'));
+        $cache = new RouteCache(vfsStream::url('cache/existing/routes.php'), self::TEST_KEY);
         $cache->save(['test' => true]);
 
         $this->assertTrue($this->root->hasChild('existing/routes.php'));

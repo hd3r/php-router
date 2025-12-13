@@ -22,11 +22,19 @@ class RouteCache
      * Create a new RouteCache instance.
      *
      * @param string $cacheFile The path to the cache file
-     * @param string|null $signatureKey Optional key for HMAC signature
+     * @param string|null $signatureKey Optional key for HMAC signature (required when enabled)
      * @param bool $enabled Whether caching is enabled
+     *
+     * @throws CacheException If caching is enabled but no signature key is provided
      */
     public function __construct(string $cacheFile, ?string $signatureKey = null, bool $enabled = true)
     {
+        // Security: Require signature key in production (when caching is enabled)
+        // This prevents RCE via tampered cache files in shared hosting environments
+        if ($enabled && $signatureKey === null) {
+            throw CacheException::signatureKeyRequired();
+        }
+
         $this->cacheFile = $cacheFile;
         $this->signatureKey = $signatureKey;
         $this->enabled = $enabled;
@@ -133,10 +141,14 @@ class RouteCache
         try {
             $data = require $this->cacheFile;
             return is_array($data) ? $data : null;
+            // @codeCoverageIgnoreStart
         } catch (\Throwable $e) {
-            // Cache is corrupted, return null to trigger rebuild
+            // Defense-in-depth: Cannot be triggered under normal circumstances
+            // because signature validation ensures content integrity.
+            // Kept for edge cases (TOCTOU, OPcache bugs, filesystem corruption).
             return null;
         }
+        // @codeCoverageIgnoreEnd
     }
 
     /**

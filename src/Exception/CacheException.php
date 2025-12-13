@@ -51,4 +51,18 @@ class CacheException extends RouterException
             'The cache file may have been tampered with or the signature key has changed.'
         );
     }
+
+    /**
+     * Create exception for missing signature key.
+     */
+    public static function signatureKeyRequired(): self
+    {
+        return new self(
+            'Cache signature key is required when caching is enabled',
+            0,
+            null,
+            'Provide a signature key via enableCache($file, $key) or set ROUTER_CACHE_KEY environment variable. '
+            . 'This prevents RCE attacks via tampered cache files.'
+        );
+    }
 }

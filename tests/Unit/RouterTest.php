@@ -283,6 +283,7 @@ class RouterTest extends TestCase
     public function testUrlGenerationWorksWithCache(): void
     {
         $cacheFile = sys_get_temp_dir() . '/router_url_cache_' . uniqid() . '.php';
+        $signatureKey = 'test-signature-key';
 
         $this->createRoutesFile(
             <<<'PHP'
@@ -299,7 +300,7 @@ class RouterTest extends TestCase
 
         // First request: creates cache
         $router1 = Router::create(['debug' => false])
-            ->enableCache($cacheFile)
+            ->enableCache($cacheFile, $signatureKey)
             ->loadRoutes($this->routesFile);
 
         $router1->handle(new ServerRequest('GET', '/users/1'));
@@ -307,7 +308,7 @@ class RouterTest extends TestCase
 
         // Second request: loads from cache (debug=false, so cache is used)
         $router2 = Router::create(['debug' => false])
-            ->enableCache($cacheFile)
+            ->enableCache($cacheFile, $signatureKey)
             ->loadRoutes($this->routesFile);
 
         $router2->handle(new ServerRequest('GET', '/users/2'));
@@ -322,6 +323,7 @@ class RouterTest extends TestCase
     public function testCacheLoadPathWithNamedRoutes(): void
     {
         $cacheFile = sys_get_temp_dir() . '/router_cache_named_' . uniqid() . '.php';
+        $signatureKey = 'test-signature-key';
 
         $this->createRoutesFile(
             <<<'PHP'
@@ -351,7 +353,7 @@ class RouterTest extends TestCase
         );
 
         $router1 = Router::create(['debug' => false])
-            ->enableCache($cacheFile)
+            ->enableCache($cacheFile, $signatureKey)
             ->loadRoutes($this->routesFile);
 
         // Trigger route compilation and cache save
@@ -370,7 +372,7 @@ class RouterTest extends TestCase
         // Second: Load from cache - routes file doesn't exist but cache does
         // This exercises the else branch at Router.php:236-238
         $router2 = Router::create(['debug' => false])
-            ->enableCache($cacheFile)
+            ->enableCache($cacheFile, $signatureKey)
             ->loadRoutes($this->routesFile);
 
         // URL generation exercises Router.php:273 (using cachedNamedRoutes)

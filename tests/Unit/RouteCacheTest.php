@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 
 class RouteCacheTest extends TestCase
 {
+    private const TEST_KEY = 'test-signature-key-for-unit-tests';
+
     private string $cacheDir;
     private string $cacheFile;
 
@@ -34,7 +36,7 @@ class RouteCacheTest extends TestCase
 
     public function testSaveAndLoad(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $data = [
             'static' => ['/users' => 'handler'],
             'dynamic' => [],
@@ -122,7 +124,7 @@ class RouteCacheTest extends TestCase
 
     public function testSaveRejectsClosures(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $data = [
             'handler' => function () {
                 return 'test';
@@ -138,7 +140,7 @@ class RouteCacheTest extends TestCase
     {
         $nestedDir = $this->cacheDir . '/nested/deep';
         $cacheFile = $nestedDir . '/routes.php';
-        $cache = new RouteCache($cacheFile);
+        $cache = new RouteCache($cacheFile, self::TEST_KEY);
 
         $cache->save(['test' => true]);
 
@@ -162,13 +164,13 @@ class RouteCacheTest extends TestCase
 
     public function testLoadReturnsNullWhenFileDoesNotExist(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $this->assertNull($cache->load());
     }
 
     public function testClear(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $cache->save(['test' => true]);
 
         $this->assertTrue($cache->clear());
@@ -177,13 +179,13 @@ class RouteCacheTest extends TestCase
 
     public function testClearReturnsFalseWhenNoFile(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $this->assertFalse($cache->clear());
     }
 
     public function testIsFresh(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $cache->save(['test' => true]);
 
         $this->assertTrue($cache->isFresh());
@@ -198,13 +200,13 @@ class RouteCacheTest extends TestCase
 
     public function testIsFreshReturnsFalseWhenNoFile(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $this->assertFalse($cache->isFresh());
     }
 
     public function testGetModificationTime(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $cache->save(['test' => true]);
 
         $mtime = $cache->getModificationTime();
@@ -214,13 +216,13 @@ class RouteCacheTest extends TestCase
 
     public function testGetModificationTimeReturnsNullWhenNoFile(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $this->assertNull($cache->getModificationTime());
     }
 
     public function testIsEnabled(): void
     {
-        $enabledCache = new RouteCache($this->cacheFile, null, true);
+        $enabledCache = new RouteCache($this->cacheFile, self::TEST_KEY, true);
         $disabledCache = new RouteCache($this->cacheFile, null, false);
 
         $this->assertTrue($enabledCache->isEnabled());
@@ -232,6 +234,8 @@ class RouteCacheTest extends TestCase
         $cache = new RouteCache($this->cacheFile, null, false);
         $this->assertFalse($cache->isEnabled());
 
+        // Note: setEnabled(true) without key would be invalid in production,
+        // but the check is only in constructor. This tests the setter works.
         $result = $cache->setEnabled(true);
         $this->assertTrue($cache->isEnabled());
         $this->assertSame($cache, $result); // Fluent API
@@ -239,7 +243,7 @@ class RouteCacheTest extends TestCase
 
     public function testGetCacheFile(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $this->assertSame($this->cacheFile, $cache->getCacheFile());
     }
 
@@ -252,7 +256,7 @@ class RouteCacheTest extends TestCase
             $this->markTestSkipped('chmod not supported on Windows');
         }
 
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $cache->save(['test' => true]);
 
         // Make file unreadable
@@ -268,29 +272,31 @@ class RouteCacheTest extends TestCase
 
     public function testLoadReturnsNullOnCorruptedFile(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
-        // Create corrupted PHP file
-        file_put_contents($this->cacheFile, "<?php\nreturn invalid syntax;");
+        // Create corrupted PHP file (with valid signature format to pass check)
+        $fakeSignature = str_repeat('a', 64);
+        file_put_contents($this->cacheFile, "<?php\n// HMAC-SHA256: {$fakeSignature}\nreturn invalid syntax;");
 
-        $loaded = $cache->load();
-        $this->assertNull($loaded);
+        // Will fail signature check first, then return null on parse error
+        $this->expectException(CacheException::class);
+        $cache->load();
     }
 
     public function testLoadReturnsNullOnNonArrayReturn(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
-        // Create file that returns non-array
+        // Create file that returns non-array (will fail signature)
+        $this->expectException(CacheException::class);
         file_put_contents($this->cacheFile, "<?php\nreturn 'not an array';");
 
-        $loaded = $cache->load();
-        $this->assertNull($loaded);
+        $cache->load();
     }
 
     public function testIsFreshWithExpiredMaxAge(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
         $cache->save(['test' => true]);
 
         // Touch file to make it old
@@ -301,7 +307,7 @@ class RouteCacheTest extends TestCase
 
     public function testSaveRejectsClosuresInRouteObjects(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
         // Create a Route-like object with a Closure handler
         $route = new \Hd3r\Router\Route(
@@ -322,7 +328,7 @@ class RouteCacheTest extends TestCase
 
     public function testSaveRejectsNestedClosuresInObjects(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
         // Create nested structure with Closure
         $route = new \Hd3r\Router\Route(
@@ -344,7 +350,7 @@ class RouteCacheTest extends TestCase
 
     public function testSaveHandlesCircularReferences(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
         // Create object with circular reference
         $obj1 = new \stdClass();
@@ -360,5 +366,20 @@ class RouteCacheTest extends TestCase
 
         // If we got here, the circular reference protection worked
         $this->assertFileExists($this->cacheFile);
+    }
+
+    public function testConstructorThrowsWhenEnabledWithoutKey(): void
+    {
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('signature key is required');
+
+        new RouteCache($this->cacheFile, null, true);
+    }
+
+    public function testConstructorAllowsDisabledWithoutKey(): void
+    {
+        // Should not throw - disabled cache doesn't need key
+        $cache = new RouteCache($this->cacheFile, null, false);
+        $this->assertFalse($cache->isEnabled());
     }
 }

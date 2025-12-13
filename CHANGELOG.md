@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Security:** Cache signature key is now **required** when caching is enabled.
+  - Prevents RCE via tampered cache files in shared hosting environments.
+  - In debug mode (`debug=true`), caching is disabled so no key is needed.
+  - Exception message provides clear guidance on how to fix.
+
+### Fixed
+- Invalid parameter types (e.g., `"abc"` for `:int`) now return `400 Bad Request` instead of `500 Internal Server Error`.
+  - TypeError during parameter casting is a client error, not a server error.
+
 ## [1.1.1] - 2025-12-13
 
 ### Fixed

@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 class RouteCacheRenameFailTest extends TestCase
 {
+    private const TEST_KEY = 'test-signature-key-for-unit-tests';
+
     private string $cacheDir;
     private string $cacheFile;
 
@@ -61,7 +63,7 @@ class RouteCacheRenameFailTest extends TestCase
 
     public function testSaveThrowsWhenRenameFails(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
         // Enable the rename mock to return false
         $GLOBALS['mock_rename_failure'] = true;
@@ -74,7 +76,7 @@ class RouteCacheRenameFailTest extends TestCase
 
     public function testSaveCleansTempFileWhenRenameFails(): void
     {
-        $cache = new RouteCache($this->cacheFile);
+        $cache = new RouteCache($this->cacheFile, self::TEST_KEY);
 
         // Enable the rename mock
         $GLOBALS['mock_rename_failure'] = true;
